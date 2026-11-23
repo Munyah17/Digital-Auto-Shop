@@ -1,0 +1,672 @@
+"use client";
+
+import { useState, useMemo, useEffect, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  ArrowLeft, ShieldCheck, Lock, CreditCard, Smartphone,
+  CheckCircle, Truck, Store, MapPin, Clock, Search, X,
+  Landmark, Banknote, Wallet, ChevronDown, MessageCircle,
+} from "lucide-react";
+import { useCartStore } from "@/lib/store/cartStore";
+import { Button } from "@/components/ui/Button";
+import {
+  DELIVERY_CITIES, COLLECTION_POINT, searchAreas,
+  type DeliveryArea,
+} from "@/lib/delivery";
+import { MANUAL_METHODS } from "@/lib/manualPayments";
+import type { PaymentMethod } from "@/types";
+
+const MANUAL_ICONS: Record<string, React.ReactNode> = {
+  bank_transfer: <Landmark size={20} className="text-emerald-500" />,
+  ecocash:       <Banknote size={20} className="text-sky-500" />,
+  innbucks:      <Wallet size={20} className="text-amber-500" />,
+};
+
+type DeliveryMethod = "delivery" | "collection";
+
+interface FormState {
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  addr_line1: string;
+  addr_detail: string;
+  notes: string;
+  payment_method: PaymentMethod;
+}
+
+export default function CheckoutPage() {
+  const { items, total, itemCount } = useCartStore();
+  const cartTotal = total();
+  const count = itemCount();
+
+  const [form, setForm] = useState<FormState>({
+    customer_name: "",
+    customer_email: "",
+    customer_phone: "",
+    addr_line1: "",
+    addr_detail: "",
+    notes: "",
+    payment_method: "stripe",
+  });
+
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>("delivery");
+  const [deliveryCity, setDeliveryCity] = useState("Harare");
+  const [selectedArea, setSelectedArea] = useState<DeliveryArea | null>(null);
+  const [suburbQuery, setSuburbQuery] = useState("");
+  const [suburbResults, setSuburbResults] = useState<DeliveryArea[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function onClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowResults(false);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  // Filter suburb results as user types
+  useEffect(() => {
+    if (suburbQuery.length < 1) {
+      setSuburbResults([]);
+      return;
+    }
+    setSuburbResults(searchAreas(deliveryCity, suburbQuery));
+    setShowResults(true);
+  }, [suburbQuery, deliveryCity]);
+
+  function handleCityChange(city: string) {
+    setDeliveryCity(city);
+    setSelectedArea(null);
+    setSuburbQuery("");
+  }
+
+  function selectArea(area: DeliveryArea) {
+    setSelectedArea(area);
+    setSuburbQuery(area.name);
+    setShowResults(false);
+  }
+
+  function clearArea() {
+    setSelectedArea(null);
+    setSuburbQuery("");
+  }
+
+  const shippingFee = useMemo(() => {
+    if (deliveryMethod === "collection") return 0;
+    return selectedArea?.fee ?? 0;
+  }, [deliveryMethod, selectedArea]);
+
+  const orderTotal = cartTotal + shippingFee;
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+  }
+
+  async function handleCheckout() {
+    setError("");
+
+    if (!form.customer_name || !form.customer_email) {
+      setError("Full name and email are required.");
+      return;
+    }
+
+    if (deliveryMethod === "delivery") {
+      if (!selectedArea) {
+        setError("Please search and select your suburb.");
+        return;
+      }
+      if (!form.addr_line1) {
+        setError("Please enter your street address.");
+        return;
+      }
+    }
+
+    setLoading(true);
+
+    const isManual = MANUAL_METHODS.some((m) => m.id === form.payment_method);
+    const endpoint = isManual
+      ? "/api/payments/manual"
+      : form.payment_method === "stripe"
+        ? "/api/payments/stripe"
+        : "/api/payments/paynow";
+
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((i) => ({
+            product_id: i.product_id,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+          })),
+          customer_name: form.customer_name,
+          customer_email: form.customer_email,
+          customer_phone: form.customer_phone || null,
+          shipping_address:
+            deliveryMethod === "delivery"
+              ? {
+                  line1: form.addr_line1,
+                  line2: form.addr_detail || undefined,
+                  city: selectedArea!.city,
+                  state: selectedArea!.name,
+                  country: "Zimbabwe",
+                }
+              : null,
+          notes:
+            deliveryMethod === "collection"
+              ? `SELF COLLECTION${form.notes ? ". " + form.notes : ""}`.trim()
+              : form.notes || null,
+          shipping_cost: shippingFee,
+          fulfillment_type: deliveryMethod,
+          payment_method: form.payment_method,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? "Failed to initiate payment.");
+      }
+
+      window.location.href = data.url;
+    } catch (err: unknown) {
+      setLoading(false);
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    }
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen pt-24 flex flex-col items-center justify-center gap-4 text-center px-4">
+        <span className="text-5xl">🛒</span>
+        <h2 className="font-display text-2xl text-obsidian-200">Your cart is empty</h2>
+        <Link href="/products"><Button variant="gold">Browse Products</Button></Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-24 pb-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-8">
+          <Link href="/cart" className="text-obsidian-400 hover:text-gold-500 transition-colors">
+            <ArrowLeft size={20} />
+          </Link>
+          <div>
+            <h1 className="font-display font-bold text-3xl text-obsidian-50">Checkout</h1>
+            <p className="text-obsidian-500 text-sm">{count} item{count !== 1 ? "s" : ""} · ${orderTotal.toFixed(2)}</p>
+          </div>
+        </div>
+
+        {/* Security notice */}
+        <div className="flex items-center gap-3 px-4 py-3 mb-8 bg-obsidian-800/60 border border-gold-500/20 rounded-xl">
+          <ShieldCheck size={18} className="text-gold-500 shrink-0" />
+          <p className="text-obsidian-300 text-sm">
+            Payment is handled entirely by Stripe or Paynow — we never see your card details.
+            All transactions settle in <strong className="text-obsidian-100">USD</strong>.
+          </p>
+          <Lock size={14} className="text-obsidian-500 shrink-0 ml-auto" />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* ── LEFT: Form ── */}
+          <div className="lg:col-span-3 space-y-6">
+
+            {/* Contact */}
+            <Section title="Contact Information">
+              <p className="text-obsidian-500 text-xs mb-4">
+                Buying as a gift from abroad? Enter your own details — we ship to the Zimbabwe address below.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Field label="Full Name *" name="customer_name" value={form.customer_name} onChange={handleChange} placeholder="John Doe" />
+                <Field label="Email Address *" name="customer_email" type="email" value={form.customer_email} onChange={handleChange} placeholder="you@email.com" />
+                <Field label="Phone Number" name="customer_phone" type="tel" value={form.customer_phone} onChange={handleChange} placeholder="+263 77 390 9307" className="sm:col-span-2" />
+              </div>
+            </Section>
+
+            {/* Delivery Method */}
+            <Section title="Delivery Method">
+              <div className="grid grid-cols-2 gap-3 mb-5">
+                <MethodCard
+                  active={deliveryMethod === "delivery"}
+                  onClick={() => setDeliveryMethod("delivery")}
+                  icon={<Truck size={20} />}
+                  label="Home Delivery"
+                  sub="Delivered in Zimbabwe"
+                />
+                <MethodCard
+                  active={deliveryMethod === "collection"}
+                  onClick={() => setDeliveryMethod("collection")}
+                  icon={<Store size={20} />}
+                  label="Self Collection"
+                  sub="Pick up — free"
+                />
+              </div>
+
+              {deliveryMethod === "delivery" ? (
+                <div className="space-y-4">
+                  {/* City */}
+                  <div>
+                    <label className={labelCls}>City / Town *</label>
+                    <select
+                      value={deliveryCity}
+                      onChange={(e) => handleCityChange(e.target.value)}
+                      className={inputCls}
+                    >
+                      {DELIVERY_CITIES.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Suburb autocomplete */}
+                  <div>
+                    <label className={labelCls}>Suburb / Area *</label>
+                    <div className="relative" ref={searchRef}>
+                      <div className="relative">
+                        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-obsidian-500 pointer-events-none" />
+                        <input
+                          type="text"
+                          value={suburbQuery}
+                          onChange={(e) => {
+                            setSuburbQuery(e.target.value);
+                            if (selectedArea && e.target.value !== selectedArea.name) setSelectedArea(null);
+                          }}
+                          onFocus={() => suburbQuery.length > 0 && setShowResults(true)}
+                          placeholder={`Search suburb in ${deliveryCity}…`}
+                          className={`${inputCls} pl-9 pr-9`}
+                        />
+                        {suburbQuery && (
+                          <button
+                            type="button"
+                            onClick={clearArea}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-obsidian-500 hover:text-obsidian-300"
+                          >
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Results dropdown */}
+                      {showResults && suburbResults.length > 0 && (
+                        <div className="absolute z-20 w-full mt-1 bg-obsidian-900 border border-obsidian-600 rounded-xl shadow-xl overflow-hidden">
+                          {suburbResults.map((area) => (
+                            <button
+                              key={area.id}
+                              type="button"
+                              onClick={() => selectArea(area)}
+                              className="w-full flex items-center justify-between px-4 py-2.5 text-left hover:bg-obsidian-800 transition-colors border-b border-obsidian-800 last:border-0"
+                            >
+                              <span className="text-obsidian-200 text-sm">{area.name}</span>
+                              <span className="text-gold-500 text-xs font-mono font-semibold shrink-0 ml-3">
+                                ${area.fee.toFixed(2)}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+
+                      {showResults && suburbQuery.length > 0 && suburbResults.length === 0 && (
+                        <div className="absolute z-20 w-full mt-1 bg-obsidian-900 border border-obsidian-600 rounded-xl shadow-xl px-4 py-3">
+                          <p className="text-obsidian-500 text-sm">No suburbs found. Try a different name.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {selectedArea && (
+                      <div className="flex items-center justify-between mt-2 px-3 py-2 bg-gold-500/10 border border-gold-500/25 rounded-lg">
+                        <div className="flex items-center gap-2 text-gold-400">
+                          <MapPin size={13} />
+                          <span className="text-xs font-medium">{selectedArea.name}, {selectedArea.city}</span>
+                        </div>
+                        <span className="text-gold-400 text-xs font-mono font-bold">${selectedArea.fee.toFixed(2)}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Street address */}
+                  <Field label="Street Address *" name="addr_line1" value={form.addr_line1} onChange={handleChange} placeholder="123 Main Street" />
+                  <Field label="Flat / Unit / Building" name="addr_detail" value={form.addr_detail} onChange={handleChange} placeholder="e.g. Flat 4B, Green Court" />
+                </div>
+              ) : (
+                <div className="bg-obsidian-900 border border-obsidian-700 rounded-xl p-4 space-y-2.5">
+                  <div className="flex items-start gap-3">
+                    <MapPin size={15} className="text-gold-500 mt-0.5 shrink-0" />
+                    <div>
+                      <p className="text-obsidian-100 text-sm font-semibold">{COLLECTION_POINT.name}</p>
+                      <p className="text-obsidian-400 text-xs">{COLLECTION_POINT.address}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <Clock size={15} className="text-gold-500 shrink-0" />
+                    <p className="text-obsidian-400 text-xs">{COLLECTION_POINT.hours}</p>
+                  </div>
+                  <p className="text-obsidian-500 text-xs pl-6">{COLLECTION_POINT.note}</p>
+                  <div className="pl-6">
+                    <span className="text-xs font-mono font-bold text-green-400">FREE — No shipping charge</span>
+                  </div>
+                </div>
+              )}
+            </Section>
+
+            {/* Notes */}
+            <Section title="Order Notes (Optional)">
+              <textarea
+                name="notes"
+                value={form.notes}
+                onChange={handleChange}
+                placeholder="Special instructions, gate codes, recipient name if gifting…"
+                rows={3}
+                className={`${inputCls} resize-none`}
+              />
+            </Section>
+
+            {/* Payment Method */}
+            <Section title="Payment Method">
+              <p className="text-obsidian-500 text-xs mb-4">
+                All payments settle in <strong className="text-obsidian-300">USD</strong>.
+                Your browser will redirect to the gateway — we never collect your payment details.
+              </p>
+              <div className="space-y-4">
+                <PaymentOption
+                  id="stripe"
+                  selected={form.payment_method === "stripe"}
+                  onSelect={() => setForm((f) => ({ ...f, payment_method: "stripe" }))}
+                  label="Pay with Stripe"
+                  subtitle="International cards & digital wallets · USD"
+                  icon={<CreditCard size={20} className="text-[#635BFF]" />}
+                  bannerSrc="/payment-banners/stripe-banner.png"
+                  bannerAlt="Stripe — Visa, Mastercard, Amex, Apple Pay, Google Pay"
+                  accentColor="border-[#635BFF]/40 bg-[#635BFF]/5"
+                  tagline="Powered by Stripe — PCI DSS Level 1 Certified"
+                />
+                <PaymentOption
+                  id="paynow"
+                  selected={form.payment_method === "paynow"}
+                  onSelect={() => setForm((f) => ({ ...f, payment_method: "paynow" }))}
+                  label="Pay with Paynow Zimbabwe"
+                  subtitle="Mobile money & cards — settled in USD"
+                  icon={<Smartphone size={20} className="text-[#E31837]" />}
+                  bannerSrc="/payment-banners/paynow-banner.svg"
+                  bannerAlt="Paynow — EcoCash, OneMoney, InnBucks, Visa, Mastercard"
+                  accentColor="border-[#E31837]/40 bg-[#E31837]/5"
+                  tagline="Zimbabwe's trusted payment gateway"
+                />
+
+                {/* Manual payment methods — collapsible banners */}
+                {MANUAL_METHODS.map((m) => (
+                  <ManualOption
+                    key={m.id}
+                    selected={form.payment_method === m.id}
+                    onSelect={() => setForm((f) => ({ ...f, payment_method: m.id }))}
+                    icon={MANUAL_ICONS[m.id]}
+                    label={m.label}
+                    subtitle={m.subtitle}
+                    instructions={m.instructions}
+                  />
+                ))}
+              </div>
+            </Section>
+
+            {error && (
+              <div className="p-4 bg-red-900/30 border border-red-600/50 rounded-xl text-red-400 text-sm">
+                {error}
+              </div>
+            )}
+          </div>
+
+          {/* ── RIGHT: Order Summary ── */}
+          <div className="lg:col-span-2">
+            <div className="bg-obsidian-800 border border-obsidian-700 rounded-xl p-6 sticky top-24 space-y-5">
+              <h2 className="font-display font-semibold text-obsidian-100 pb-4 border-b border-obsidian-700">
+                Order Summary
+              </h2>
+
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {items.map((item) => (
+                  <div key={item.product_id} className="flex gap-3">
+                    <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-obsidian-700 shrink-0">
+                      <Image src={item.image} alt={item.name} fill className="object-cover" />
+                      <span className="absolute -top-1 -right-1 w-4 h-4 bg-gold-500 text-zinc-950 rounded-full text-[9px] font-bold flex items-center justify-center">
+                        {item.quantity}
+                      </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-obsidian-200 text-xs leading-snug line-clamp-2">{item.name}</p>
+                      <p className="text-gold-500 text-xs font-mono font-bold mt-0.5">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="border-t border-obsidian-700 pt-4 space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-obsidian-400">Subtotal</span>
+                  <span className="text-obsidian-100 font-mono">${cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-obsidian-400">
+                    {deliveryMethod === "collection" ? "Collection" : "Delivery"}
+                  </span>
+                  {deliveryMethod === "collection" ? (
+                    <span className="text-green-400 font-mono font-semibold">FREE</span>
+                  ) : selectedArea ? (
+                    <span className="text-obsidian-100 font-mono">${shippingFee.toFixed(2)}</span>
+                  ) : (
+                    <span className="text-obsidian-500 text-xs">Select suburb above</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="border-t border-obsidian-700 pt-4">
+                <div className="flex justify-between items-baseline mb-6">
+                  <span className="text-obsidian-100 font-semibold">Total (USD)</span>
+                  <span className="text-gold-500 font-bold font-mono text-2xl">
+                    ${orderTotal.toFixed(2)}
+                  </span>
+                </div>
+
+                <Button
+                  variant="gold"
+                  fullWidth
+                  size="lg"
+                  loading={loading}
+                  onClick={handleCheckout}
+                  className="text-base font-bold"
+                >
+                  <Lock size={16} />
+                  {loading
+                    ? "Redirecting to Payment…"
+                    : isManualMethod(form.payment_method)
+                      ? "Place Order — Pay After"
+                      : `Pay via ${form.payment_method === "stripe" ? "Stripe" : "Paynow"}`}
+                </Button>
+
+                <p className="text-obsidian-600 text-[11px] text-center mt-3 leading-relaxed font-mono">
+                  By proceeding you agree to our{" "}
+                  <Link href="/legal/terms" className="text-obsidian-400 hover:text-gold-500">Terms</Link>.
+                  {" "}Payment by {paymentLabel(form.payment_method)} · USD only.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+
+const inputCls =
+  "w-full bg-obsidian-900 border border-obsidian-600 rounded-lg px-4 py-3 text-obsidian-100 text-sm placeholder:text-obsidian-600 focus:outline-none focus:border-gold-500 transition-colors";
+const labelCls = "block text-obsidian-400 text-xs font-medium mb-1.5 uppercase tracking-wide";
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-obsidian-800 border border-obsidian-700 rounded-xl p-6">
+      <h2 className="font-display font-semibold text-obsidian-100 text-base mb-5 pb-4 border-b border-obsidian-700">
+        {title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({
+  label, name, type = "text", value, onChange, placeholder, className = "",
+}: {
+  label: string; name: string; type?: string; value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string; className?: string;
+}) {
+  return (
+    <div className={className}>
+      <label className={labelCls}>{label}</label>
+      <input type={type} name={name} value={value} onChange={onChange} placeholder={placeholder} className={inputCls} />
+    </div>
+  );
+}
+
+function MethodCard({ active, onClick, icon, label, sub }: {
+  active: boolean; onClick: () => void;
+  icon: React.ReactNode; label: string; sub: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`w-full rounded-xl border-2 p-4 text-left transition-all duration-150 ${
+        active ? "border-gold-500 bg-gold-500/8" : "border-obsidian-700 bg-obsidian-900 hover:border-obsidian-500"
+      }`}
+    >
+      <div className={`mb-1.5 ${active ? "text-gold-500" : "text-obsidian-400"}`}>{icon}</div>
+      <p className={`font-semibold text-sm ${active ? "text-obsidian-50" : "text-obsidian-300"}`}>{label}</p>
+      <p className="text-obsidian-500 text-xs">{sub}</p>
+    </button>
+  );
+}
+
+function PaymentOption({
+  id, selected, onSelect, label, subtitle, icon, bannerSrc, bannerAlt,
+  accentColor, tagline,
+}: {
+  id: string; selected: boolean; onSelect: () => void; label: string;
+  subtitle: string; icon: React.ReactNode; bannerSrc: string; bannerAlt: string;
+  accentColor: string; tagline: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={`w-full text-left rounded-xl border-2 p-4 transition-all duration-200 ${
+        selected ? `${accentColor} border-current shadow-sm` : "border-obsidian-700 bg-obsidian-900 hover:border-obsidian-500"
+      }`}
+    >
+      <div className="flex items-start gap-3 mb-3">
+        <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+          selected ? "border-gold-500 bg-gold-500" : "border-obsidian-600"
+        }`}>
+          {selected && <CheckCircle size={12} className="text-zinc-950" />}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-0.5">
+            {icon}
+            <span className="text-obsidian-100 font-semibold text-sm">{label}</span>
+          </div>
+          <p className="text-obsidian-500 text-xs">{subtitle}</p>
+        </div>
+      </div>
+
+      <div className="relative w-full h-16 rounded-lg overflow-hidden bg-white border border-obsidian-700 mb-3">
+        <Image src={bannerSrc} alt={bannerAlt} fill className="object-contain px-3 py-1.5" />
+      </div>
+
+      <p className="text-obsidian-600 text-[11px] flex items-center gap-1">
+        <Lock size={10} /> {tagline}
+      </p>
+    </button>
+  );
+}
+
+function isManualMethod(id: PaymentMethod): boolean {
+  return MANUAL_METHODS.some((m) => m.id === id);
+}
+
+function paymentLabel(id: PaymentMethod): string {
+  if (id === "stripe") return "Stripe, Inc.";
+  if (id === "paynow") return "Paynow Zimbabwe";
+  return MANUAL_METHODS.find((m) => m.id === id)?.label ?? id;
+}
+
+function ManualOption({
+  selected, onSelect, icon, label, subtitle, instructions,
+}: {
+  selected: boolean; onSelect: () => void; icon: React.ReactNode;
+  label: string; subtitle: string; instructions: string[];
+}) {
+  return (
+    <div
+      className={`rounded-xl border-2 transition-all duration-200 ${
+        selected
+          ? "border-gold-500/60 bg-gold-500/5"
+          : "border-obsidian-700 bg-obsidian-900 hover:border-obsidian-500"
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onSelect}
+        className="w-full flex items-center gap-3 p-4 text-left"
+      >
+        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+          selected ? "border-gold-500 bg-gold-500" : "border-obsidian-600"
+        }`}>
+          {selected && <CheckCircle size={12} className="text-zinc-950" />}
+        </div>
+        {icon}
+        <div className="flex-1 min-w-0">
+          <p className="text-obsidian-100 font-semibold text-sm">{label}</p>
+          <p className="text-obsidian-500 text-xs">{subtitle}</p>
+        </div>
+        <ChevronDown
+          size={16}
+          className={`text-obsidian-500 transition-transform duration-200 ${selected ? "rotate-180 text-gold-500" : ""}`}
+        />
+      </button>
+
+      {selected && (
+        <div className="px-4 pb-4 pt-1 border-t border-obsidian-700/60">
+          <p className="text-obsidian-400 text-xs font-semibold uppercase tracking-wide mb-2 mt-3">
+            How to pay
+          </p>
+          <ol className="space-y-1.5">
+            {instructions.map((line, i) => (
+              <li key={i} className="text-obsidian-300 text-xs flex gap-2">
+                <span className="text-gold-500 font-mono shrink-0">{i + 1}.</span>
+                <span>{line}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="text-obsidian-500 text-[11px] mt-3 flex items-center gap-1.5">
+            <MessageCircle size={11} className="text-green-500 shrink-0" />
+            After paying, send your proof of payment on WhatsApp from the order page.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+}
