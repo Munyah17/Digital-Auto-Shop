@@ -1,0 +1,39 @@
+import { createClient, createAdminClient } from "@/lib/supabase/server";
+import { redirect } from "next/navigation";
+import { AdminSidebar } from "@/components/admin/AdminSidebar";
+import { AdminMobileWrapper } from "@/components/admin/AdminMobileWrapper";
+import { hasPermission } from "@/lib/roles";
+
+export const metadata = { title: "Admin Panel | DAS" };
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login?redirect=/admin/dashboard");
+
+  const admin = createAdminClient();
+  const { data: profile } = await admin
+    .from("profiles")
+    .select("full_name, email, role, username")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || !hasPermission(profile.role, "admin_panel:access")) {
+    redirect("/?error=unauthorized");
+  }
+
+  return (
+    <div className="portal-dark flex min-h-screen w-full overflow-x-hidden bg-obsidian-950">
+      {/* Desktop sidebar */}
+      <div className="hidden lg:flex shrink-0">
+        <AdminSidebar profile={profile} />
+      </div>
+
+      {/* Main content column — includes mobile top bar */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+        <AdminMobileWrapper profile={profile} />
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">{children}</main>
+      </div>
+    </div>
+  );
+}
