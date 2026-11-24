@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Auto Shop — Phones, Gadgets, Auto Parts & Laptops</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- Announcement bar -->
+  <div class="announce">
+    <span>Free delivery on orders over $100</span>
+    <span class="announce-dot">•</span>
+    <span>Pay on delivery available</span>
+    <span class="announce-dot">•</span>
+    <span>Harare &amp; Bulawayo same-day dispatch</span>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        </span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+
+      <nav class="nav">
+        <a href="#best-picks" class="nav-link active">Best Picks</a>
+        <a href="#phones" class="nav-link">Phones &amp; Gadgets</a>
+        <a href="#parts" class="nav-link">Vehicle Parts</a>
+        <a href="#laptops" class="nav-link">Laptops</a>
+        <a href="shop.html" class="nav-link">Shop All</a>
+      </nav>
+
+      <div class="header-actions">
+        <a href="shop.html" class="icon-btn" aria-label="Search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </a>
+        <button class="icon-btn" aria-label="Wishlist">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z"/></svg>
+        </button>
+        <button class="icon-btn cart-btn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg>
+          <span class="cart-count" id="cartCount">0</span>
+        </button>
+        <button class="burger" id="burger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="#best-picks">Best Picks</a>
+      <a href="#phones">Phones &amp; Gadgets</a>
+      <a href="#parts">Vehicle Parts</a>
+      <a href="#laptops">Laptops</a>
+      <a href="shop.html">Shop All</a>
+    </div>
+  </header>
+
+  <!-- Hero slider (slides managed via admin portal, up to 10) -->
+  <section class="hero" id="hero">
+    <div class="hero-slides" id="heroSlides"></div>
+    <div class="hero-dots" id="heroDots"></div>
+    <div class="hero-wave">
+      <svg viewBox="0 0 1440 70" preserveAspectRatio="none" fill="none">
+        <path d="M0 45 C240 8 480 8 720 32 C960 56 1200 56 1440 20 L1440 70 L0 70 Z" fill="#f8fafc"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- Trust strip -->
+  <section class="trust">
+    <div class="container trust-grid">
+      <div class="trust-item">
+        <span class="trust-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg>
+        </span>
+        <div><strong>Same-day dispatch</strong><span>Order before 2pm</span></div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-4z"/><path d="m9 12 2 2 4-4"/></svg>
+        </span>
+        <div><strong>Genuine products</strong><span>Authorized dealers</span></div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+        </span>
+        <div><strong>Flexible payments</strong><span>EcoCash, OneMoney, card</span></div>
+      </div>
+      <div class="trust-item">
+        <span class="trust-ic">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4.5 4.5 0 0 0-6 6L3 18l3 3 5.7-5.7a4.5 4.5 0 0 0 6-6L14 13l-3-3 3.7-3.7z"/></svg>
+        </span>
+        <div><strong>Free fitting</strong><span>Parts installed for you</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Product sections -->
+  <main>
+
+    <section class="section" id="best-picks">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="section-tag">Most Wanted</span>
+            <h2>Best Picks</h2>
+            <p>Our all-time best sellers, hand-picked by customers.</p>
+          </div>
+          <a href="shop.html?category=best-picks" class="link-more">See all →</a>
+        </div>
+        <div class="carousel" data-carousel>
+          <button class="car-arrow prev" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="car-track" id="track-best"></div>
+          <button class="car-arrow next" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="phones">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="section-tag">Tech</span>
+            <h2>Phones &amp; Gadgets</h2>
+            <p>Smartphones, audio, wearables and smart accessories.</p>
+          </div>
+          <a href="shop.html?category=phones-gadgets" class="link-more">See all →</a>
+        </div>
+        <div class="carousel" data-carousel>
+          <button class="car-arrow prev" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="car-track" id="track-phones"></div>
+          <button class="car-arrow next" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="parts">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="section-tag">Auto</span>
+            <h2>Vehicle Parts</h2>
+            <p>Genuine OEM parts for Toyota, Nissan, Ford, Isuzu &amp; more.</p>
+          </div>
+          <a href="shop.html?category=vehicle-parts" class="link-more">See all →</a>
+        </div>
+        <div class="carousel" data-carousel>
+          <button class="car-arrow prev" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="car-track" id="track-parts"></div>
+          <button class="car-arrow next" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt" id="laptops">
+      <div class="container">
+        <div class="section-head">
+          <div>
+            <span class="section-tag">Computing</span>
+            <h2>Laptops &amp; Accessories</h2>
+            <p>Business, gaming and student laptops with full warranty.</p>
+          </div>
+          <a href="shop.html?category=laptops-accessories" class="link-more">See all →</a>
+        </div>
+        <div class="carousel" data-carousel>
+          <button class="car-arrow prev" aria-label="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m15 18-6-6 6-6"/></svg>
+          </button>
+          <div class="car-track" id="track-laptops"></div>
+          <button class="car-arrow next" aria-label="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 18 6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="container cta-inner">
+      <div>
+        <h2>Can't find what you need?</h2>
+        <p>We source parts and devices on request — usually within 48 hours.</p>
+      </div>
+      <div class="cta-actions">
+        <a href="https://wa.me/263771234567" class="btn btn-light" target="_blank" rel="noopener">WhatsApp Us</a>
+        <a href="tel:+263771234567" class="btn btn-outline-light">+263 77 123 4567</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <span class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+          </span>
+          <span class="logo-text">Digital<em>Auto</em>Shop</span>
+        </a>
+        <p>Zimbabwe's one-stop marketplace for phones, gadgets, vehicle parts and laptops — powered by local vendors.</p>
+        <div class="socials">
+          <a href="#" aria-label="Facebook">f</a>
+          <a href="#" aria-label="Instagram">ig</a>
+          <a href="#" aria-label="WhatsApp">wa</a>
+          <a href="#" aria-label="TikTok">tt</a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="shop.html?category=best-picks">Best Picks</a>
+        <a href="shop.html?category=phones-gadgets">Phones &amp; Gadgets</a>
+        <a href="shop.html?category=vehicle-parts">Vehicle Parts</a>
+        <a href="shop.html?category=laptops-accessories">Laptops</a>
+        <a href="shop.html">All Products</a>
+      </div>
+      <div class="footer-col">
+        <h4>Support</h4>
+        <a href="#">Track Order</a>
+        <a href="#">Returns &amp; Warranty</a>
+        <a href="#">Payment Options</a>
+        <a href="#">FAQs</a>
+        <a href="#">Become a Seller</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <a href="#">Sam Levy's, Harare</a>
+        <a href="tel:+263771234567">+263 77 123 4567</a>
+        <a href="mailto:hello@digitalautoshop.co.zw">hello@digitalautoshop.co.zw</a>
+        <a href="#">Mon–Sat, 8am–6pm</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <span>© 2026 Digital Auto Shop. All rights reserved.</span>
+        <span>Developed &amp; Powered By <a href="https://globalspaceweb.co.zw" target="_blank" rel="noopener">Global Space Web</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">Added to cart</div>
+
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

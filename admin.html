@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Super Admin — Hero Slides | Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <header class="header" style="position:static">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        </span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">← Back to site</a>
+        <a href="admin.html" class="nav-link active">Hero Slides</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="admin-wrap">
+    <div class="admin-head">
+      <h1>Super Admin — Hero Slides</h1>
+      <p>Manage up to 10 homepage banner slides. A slide only appears on the site when it's <strong>active</strong> and has a <strong>banner</strong> assigned.</p>
+    </div>
+
+    <div class="admin-note">
+      <strong>Banner field:</strong> paste an image URL (e.g. <code>https://…/banner.jpg</code>) or pick a gradient preset
+      (<code>gradient-blue</code>, <code>gradient-cyan</code>, <code>gradient-indigo</code>, <code>gradient-sky</code>).
+      Leave empty to hide the slide completely. Changes save automatically to this browser —
+      in production this panel talks to the admin API (<code>/api/admin/slides</code>).
+    </div>
+
+    <div id="slideList"></div>
+
+    <button class="btn btn-primary" id="addSlide" style="margin-bottom:24px">+ Add slide (max 10)</button>
+
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost" id="resetDefaults" style="border:1px solid var(--line);color:var(--ink)">Reset to defaults</button>
+      <a class="btn btn-primary" href="index.html" target="_blank" rel="noopener">Preview homepage →</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast">Saved</div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
