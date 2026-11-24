@@ -32,8 +32,25 @@ const listEl = document.getElementById("slideList");
 const toast = document.getElementById("toast");
 let toastTimer;
 
-function persist() {
+async function apiSlides() {
+  try {
+    const res = await fetch("/api/admin/slides");
+    if (!res.ok) return null;
+    const data = await res.json();
+    return Array.isArray(data) ? data : null;
+  } catch { return null; }
+}
+
+async function persist() {
   localStorage.setItem(SLIDES_KEY, JSON.stringify(slides.slice(0, MAX_SLIDES)));
+  // best-effort sync to backend (works when API is running)
+  try {
+    await fetch("/api/admin/slides", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ slides: slides.slice(0, MAX_SLIDES) }),
+    });
+  } catch { /* offline — localStorage is the fallback */ }
   toast.textContent = "Saved ✓";
   toast.classList.add("show");
   clearTimeout(toastTimer);
@@ -167,4 +184,9 @@ document.getElementById("resetDefaults").addEventListener("click", () => {
   persist(); render();
 });
 
-render();
+async function init() {
+  const remote = await apiSlides();
+  if (remote && remote.length) slides = remote.slice(0, MAX_SLIDES);
+  render();
+}
+init();

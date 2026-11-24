@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Track Order — Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .track-wrap { max-width: 640px; margin: 0 auto; padding: 50px 4% 80px; }
+    .track-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 30px; }
+    .track-card h1 { font-family: var(--font-head); font-size: 1.4rem; margin-bottom: 6px; }
+    .track-card > p { color: var(--muted); font-size: .88rem; margin-bottom: 22px; }
+    .track-form { display: flex; gap: 10px; }
+    .track-form input { flex: 1; padding: 12px 15px; border: 1px solid var(--line); border-radius: 11px; font-family: inherit; font-size: .92rem; }
+    .timeline { margin-top: 30px; }
+    .t-step { display: flex; gap: 14px; padding: 12px 0; position: relative; }
+    .t-step::before { content: ''; position: absolute; left: 15px; top: 42px; bottom: -12px; width: 2px; background: var(--line); }
+    .t-step:last-child::before { display: none; }
+    .t-dot { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; background: var(--blue-50); color: var(--blue-600); font-size: .8rem; font-weight: 700; }
+    .t-step.done .t-dot { background: var(--blue-600); color: #fff; }
+    .t-step.current .t-dot { box-shadow: 0 0 0 5px rgba(29,91,240,.18); }
+    .t-label { font-weight: 600; font-size: .9rem; }
+    .t-time { font-size: .76rem; color: var(--muted); }
+    .order-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; padding: 16px; background: var(--blue-50); border-radius: 12px; font-size: .85rem; }
+    .order-meta span { color: var(--muted); display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; font-weight: 600; }
+    .order-meta strong { font-size: .95rem; }
+    .pickup-code { text-align: center; margin: 18px 0; padding: 18px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; }
+    .pickup-code strong { font-family: var(--font-head); font-size: 2rem; letter-spacing: .3em; color: #92400e; }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <header class="header" style="position:static">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        </span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">← Storefront</a>
+        <a href="vendor.html" class="nav-link">Seller Dashboard</a>
+        <a href="track.html" class="nav-link active">Track Order</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="track-wrap">
+    <div class="track-card">
+      <h1>Track your order</h1>
+      <p>Enter your order ID (e.g. <code>ord_a1b2c3d4e5f6</code>) to see live status.</p>
+      <form class="track-form" id="trackForm">
+        <input id="orderId" placeholder="Order ID" required />
+        <button class="btn btn-primary" type="submit">Track</button>
+      </form>
+      <div id="result"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="track.js"></script>
+</body>
+</html>

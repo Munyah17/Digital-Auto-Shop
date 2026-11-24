@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Seller Dashboard — Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    .dash { max-width: 1100px; margin: 0 auto; padding: 30px 4% 70px; }
+    .dash-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+    .dash-head h1 { font-family: var(--font-head); font-size: 1.5rem; font-weight: 800; }
+    .dash-head p { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 26px; }
+    .stat-card { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; }
+    .stat-card span { font-size: .74rem; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+    .stat-card strong { display: block; font-family: var(--font-head); font-size: 1.5rem; margin-top: 6px; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: var(--radius); padding: 22px; margin-bottom: 22px; }
+    .panel h2 { font-family: var(--font-head); font-size: 1.05rem; font-weight: 700; margin-bottom: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); padding: 8px 10px; border-bottom: 1px solid var(--line); }
+    td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    .pill { font-size: .7rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; }
+    .pill.pending_payment, .pill.awaiting_pickup_payment { background: #fef3c7; color: #92400e; }
+    .pill.paid_escrow, .pill.pickup_confirmed, .pill.dispatched { background: var(--blue-100); color: var(--blue-700); }
+    .pill.delivered, .pill.completed { background: #dcfce7; color: #15803d; }
+    .pill.payout_released { background: #dbeafe; color: #1d4ed8; }
+    .pill.cancelled { background: #fee2e2; color: #b91c1c; }
+    .inline-form { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 10px; align-items: end; }
+    .inline-form .field input, .inline-form .field select { width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 9px; font-family: inherit; font-size: .85rem; }
+    .field label { display: block; font-size: .7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+    .btn-sm { padding: 9px 14px; border-radius: 9px; font-size: .82rem; font-weight: 600; }
+    .btn-danger { background: #fee2e2; color: #b91c1c; }
+    .login-card { max-width: 420px; margin: 60px auto; background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 32px; }
+    .login-card h1 { font-family: var(--font-head); font-size: 1.3rem; margin-bottom: 6px; }
+    .login-card p { color: var(--muted); font-size: .85rem; margin-bottom: 20px; }
+    .login-card select, .login-card input { width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; font-size: .9rem; margin-bottom: 12px; }
+    .hidden { display: none !important; }
+    .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
+    .tab { padding: 10px 16px; font-size: .86rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab.active { color: var(--blue-700); border-color: var(--blue-600); }
+  </style>
+</head>
+<body>
+
+  <header class="header" style="position:static">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        </span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">← Storefront</a>
+        <a href="vendor.html" class="nav-link active">Seller Dashboard</a>
+        <a href="track.html" class="nav-link">Track Order</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Login -->
+  <div class="login-card" id="loginCard">
+    <h1>Seller Dashboard</h1>
+    <p>Sign in with your vendor account to manage inventory, orders and payouts.</p>
+    <select id="vendorSelect"><option value="">Loading vendors…</option></select>
+    <button class="btn btn-primary" id="loginBtn" style="width:100%">Continue</button>
+    <p style="margin-top:14px;font-size:.78rem">New seller? <a href="#" id="registerToggle" style="color:var(--blue-600);font-weight:600">Register your shop →</a></p>
+    <div id="registerForm" class="hidden">
+      <input id="regName" placeholder="Shop name" />
+      <input id="regPhone" placeholder="Phone (EcoCash/OneMoney)" />
+      <input id="regLocation" placeholder="Location (e.g. CBD, Harare)" />
+      <button class="btn btn-primary" id="regBtn" style="width:100%">Create account</button>
+    </div>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dash hidden" id="dash">
+    <div class="dash-head">
+      <div>
+        <h1 id="vendorName">—</h1>
+        <p id="vendorMeta"></p>
+      </div>
+      <button class="btn btn-ghost" id="logoutBtn" style="border:1px solid var(--line);color:var(--ink)">Sign out</button>
+    </div>
+
+    <div class="stat-grid" id="statGrid"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="inventory">Inventory</button>
+      <button class="tab" data-tab="orders">Orders</button>
+      <button class="tab" data-tab="payouts">Payouts</button>
+    </div>
+
+    <!-- Inventory -->
+    <div class="panel" id="tab-inventory">
+      <h2>Add / update product</h2>
+      <form class="inline-form" id="productForm">
+        <div class="field"><label>Name</label><input id="pName" required placeholder="e.g. Castrol Edge 5W-30 5L" /></div>
+        <div class="field"><label>Category</label>
+          <select id="pCat">
+            <option value="phones">Phones & Gadgets</option>
+            <option value="parts">Vehicle Parts</option>
+            <option value="laptops">Laptops</option>
+            <option value="general">General</option>
+          </select>
+        </div>
+        <div class="field"><label>Price (USD)</label><input id="pPrice" type="number" min="0" step="0.01" required /></div>
+        <div class="field"><label>Stock</label><input id="pStock" type="number" min="0" required /></div>
+        <button class="btn btn-primary btn-sm" type="submit">Add</button>
+      </form>
+      <div style="margin-top:18px;overflow-x:auto">
+        <table>
+          <thead><tr><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Status</th><th></th></tr></thead>
+          <tbody id="productRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Orders -->
+    <div class="panel hidden" id="tab-orders">
+      <h2>Orders</h2>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Order</th><th>Buyer</th><th>Items</th><th>Total</th><th>Fulfilment</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="orderRows"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Payouts -->
+    <div class="panel hidden" id="tab-payouts">
+      <h2>Payout summary</h2>
+      <div class="stat-grid" id="payoutStats"></div>
+      <p style="font-size:.82rem;color:var(--muted)">Commission (8%) is withheld at source on every order. Payouts release 3 days after delivery confirmation. For cash pickups, the buyer's pickup code must be confirmed before the order completes.</p>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="vendor.js"></script>
+</body>
+</html>
