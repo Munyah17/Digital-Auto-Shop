@@ -100,8 +100,8 @@ function renderHero() {
         </div>
         <div class="hero-visual">
           <div class="hero-ring"></div>
-          <div class="hero-card hero-card-1"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><div><strong>iPhone 15 Pro</strong><span>From $1,599</span></div></div>
-          <div class="hero-card hero-card-2"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span><div><strong>Michelin Tyres</strong><span>From $145</span></div></div>
+          <div class="hero-card hero-card-1"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><div><strong>iPhone 18 Pro</strong><span>From $2,000</span></div></div>
+          <div class="hero-card hero-card-2"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span><div><strong>Joyroad Tyres</strong><span>From $32</span></div></div>
           <div class="hero-card hero-card-3"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><div><strong>ThinkPad X1</strong><span>From $1,899</span></div></div>
         </div>
       </div>
@@ -129,8 +129,8 @@ function renderHero() {
         </div>
         <div class="hero-visual">
           <div class="hero-ring"></div>
-          <div class="hero-card hero-card-1"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><div><strong>iPhone 15 Pro</strong><span>From $1,599</span></div></div>
-          <div class="hero-card hero-card-2"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span><div><strong>Michelin Tyres</strong><span>From $145</span></div></div>
+          <div class="hero-card hero-card-1"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><div><strong>iPhone 18 Pro</strong><span>From $2,000</span></div></div>
+          <div class="hero-card hero-card-2"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span><div><strong>Joyroad Tyres</strong><span>From $32</span></div></div>
           <div class="hero-card hero-card-3"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><div><strong>ThinkPad X1</strong><span>From $1,899</span></div></div>
         </div>
       </div>
