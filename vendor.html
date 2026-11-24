@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
   <style>
     .dash { max-width: 1100px; margin: 0 auto; padding: 30px 4% 70px; }
     .dash-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
@@ -41,6 +42,22 @@
     .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
     .tab { padding: 10px 16px; font-size: .86rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
     .tab.active { color: var(--blue-700); border-color: var(--blue-600); }
+
+    /* Dark theme (inline styles load after styles.css — must live here too) */
+    html[data-theme="dark"] .stat-card, html[data-theme="dark"] .panel,
+    html[data-theme="dark"] .login-card { background: var(--card); border-color: var(--card-border); }
+    html[data-theme="dark"] .login-card h1, html[data-theme="dark"] .dash-head h1 { color: var(--ink); }
+    html[data-theme="dark"] .panel h2 { color: var(--ink); }
+    html[data-theme="dark"] .inline-form input, html[data-theme="dark"] .inline-form select,
+    html[data-theme="dark"] .login-card select, html[data-theme="dark"] .login-card input,
+    html[data-theme="dark"] .stock-input { background: #0d1830; border-color: var(--card-border); color: var(--ink); }
+    html[data-theme="dark"] .pill.pending_payment, html[data-theme="dark"] .pill.awaiting_pickup_payment { background: #3d2f10; color: #fbbf24; }
+    html[data-theme="dark"] .pill.paid_escrow, html[data-theme="dark"] .pill.pickup_confirmed, html[data-theme="dark"] .pill.dispatched { background: var(--blue-100); color: #9db8ff; }
+    html[data-theme="dark"] .pill.delivered, html[data-theme="dark"] .pill.completed { background: #0d3320; color: #4ade80; }
+    html[data-theme="dark"] .pill.payout_released { background: #0d2547; color: #60a5fa; }
+    html[data-theme="dark"] .pill.cancelled { background: #3d1520; color: #f87171; }
+    html[data-theme="dark"] .tab.active { color: #9db8ff; }
+    html[data-theme="dark"] .btn-danger { background: #3d1520; color: #f87171; }
   </style>
 </head>
 <body>
@@ -57,6 +74,7 @@
         <a href="index.html" class="nav-link">← Storefront</a>
         <a href="vendor.html" class="nav-link active">Seller Dashboard</a>
         <a href="track.html" class="nav-link">Track Order</a>
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode" style="margin-left:auto"></button>
       </nav>
     </div>
   </header>

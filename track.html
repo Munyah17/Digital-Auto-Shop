@@ -7,6 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
   <style>
     .track-wrap { max-width: 640px; margin: 0 auto; padding: 50px 4% 80px; }
     .track-card { background: #fff; border: 1px solid var(--line); border-radius: 18px; padding: 30px; }
@@ -29,6 +30,16 @@
     .pickup-code { text-align: center; margin: 18px 0; padding: 18px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 12px; }
     .pickup-code strong { font-family: var(--font-head); font-size: 2rem; letter-spacing: .3em; color: #92400e; }
     .hidden { display: none !important; }
+
+    /* Dark theme (inline styles load after styles.css — must live here too) */
+    html[data-theme="dark"] .track-card { background: var(--card); border-color: var(--card-border); }
+    html[data-theme="dark"] .track-card h1 { color: var(--ink); }
+    html[data-theme="dark"] .track-form input { background: #0d1830; border-color: var(--card-border); color: var(--ink); }
+    html[data-theme="dark"] .order-meta { background: var(--blue-100); }
+    html[data-theme="dark"] .pickup-code { background: #2d2410; border-color: #5c4a1a; }
+    html[data-theme="dark"] .pickup-code strong { color: #fbbf24; }
+    html[data-theme="dark"] .t-dot { background: var(--blue-100); color: #9db8ff; }
+    html[data-theme="dark"] .t-step::before { background: var(--line); }
   </style>
 </head>
 <body>
@@ -45,6 +56,7 @@
         <a href="index.html" class="nav-link">← Storefront</a>
         <a href="vendor.html" class="nav-link">Seller Dashboard</a>
         <a href="track.html" class="nav-link active">Track Order</a>
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode" style="margin-left:auto"></button>
       </nav>
     </div>
   </header>

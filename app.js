@@ -146,8 +146,12 @@ function renderHero() {
 function initSlider(wrap, dotsWrap) {
   const slides = wrap.querySelectorAll(".hero-slide");
   const dots = dotsWrap.querySelectorAll(".hero-dot");
+  const prevBtn = document.getElementById("heroPrev");
+  const nextBtn = document.getElementById("heroNext");
   if (slides.length <= 1) {
     dotsWrap.style.display = "none";
+    if (prevBtn) prevBtn.classList.add("hidden");
+    if (nextBtn) nextBtn.classList.add("hidden");
     return;
   }
   let current = 0;
@@ -164,6 +168,13 @@ function initSlider(wrap, dotsWrap) {
     clearInterval(timer);
     timer = setInterval(() => go(current + 1), 6000);
   };
+
+  prevBtn?.addEventListener("click", () => { go(current - 1); autoplay(); });
+  nextBtn?.addEventListener("click", () => { go(current + 1); autoplay(); });
+
+  // pause autoplay while hovering / touching
+  wrap.closest(".hero")?.addEventListener("mouseenter", () => clearInterval(timer));
+  wrap.closest(".hero")?.addEventListener("mouseleave", autoplay);
 
   dotsWrap.addEventListener("click", (e) => {
     const d = e.target.closest(".hero-dot");
