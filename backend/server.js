@@ -34,6 +34,40 @@ const now = () => new Date().toISOString();
 
 /* ---------------- Seed ---------------- */
 
+/* Catalogue mirror — keeps storefront product names purchasable.
+   In production this comes from vendor inventory, not a static seed. */
+const CATALOGUE = [
+  // [name, price, stock, category, vendorName]
+  ["Samsung Galaxy S24 Ultra 256GB", 1299, 14, "phones", "TechZone"],
+  ["Anker 737 Power Bank 24,000mAh", 89, 32, "phones", "GadgetHub"],
+  ["Michelin CrossClimate2 Tyres (Set of 4)", 640, 6, "parts", "AutoParts Co."],
+  ["HP Spectre x360 14\" Touchscreen", 1499, 9, "laptops", "ComXpert"],
+  ["iPhone 15 Pro Max 256GB", 1599, 11, "phones", "TechZone"],
+  ["Google Pixel 8 Pro 128GB", 999, 17, "phones", "GadgetHub"],
+  ["Sony WH-1000XM5 Headphones", 349, 24, "phones", "SoundWorld"],
+  ["Apple Watch Series 9 GPS", 429, 13, "phones", "TechZone"],
+  ["JBL Charge 5 Bluetooth Speaker", 129, 40, "phones", "SoundWorld"],
+  ["GoPro Hero 12 Black", 399, 8, "phones", "GadgetHub"],
+  ["UGREEN Nexode 100W GaN Charger", 59, 55, "phones", "GadgetHub"],
+  ["Nintendo Switch OLED", 349, 21, "phones", "GameStop ZW"],
+  ["Castrol Edge 5W-30 Engine Oil 5L", 42, 120, "parts", "AutoParts Co."],
+  ["Bridgestone Turanza T005 Tyre", 145, 45, "parts", "TyreKing"],
+  ["Willard Automotive Battery 12V 70Ah", 189, 18, "parts", "AutoParts Co."],
+  ["Genuine Toyota Brake Pads (Front)", 68, 27, "parts", "OEM Direct"],
+  ["Philips H7 Headlight Bulbs (Pair)", 24, 80, "parts", "AutoParts Co."],
+  ["Rain-X Windshield Treatment 500ml", 18, 64, "parts", "CarCare Plus"],
+  ["NGK Iridium Spark Plugs (Set of 4)", 56, 39, "parts", "OEM Direct"],
+  ["Bosch Wiper Blades (Pair)", 29, 51, "parts", "CarCare Plus"],
+  ["Lenovo ThinkPad X1 Carbon Gen 12", 1899, 7, "laptops", "ComXpert"],
+  ["Dell XPS 15 OLED 3.8K", 2199, 5, "laptops", "ComXpert"],
+  ["ASUS ROG Strix G16 Gaming", 1799, 10, "laptops", "GameStop ZW"],
+  ["Acer Aspire 5 Student Edition", 649, 22, "laptops", "ComXpert"],
+  ["MacBook Air M3 13\" 8GB/256GB", 1599, 12, "laptops", "TechZone"],
+  ["Logitech MX Keys Keyboard", 99, 33, "laptops", "GadgetHub"],
+  ["Logitech MX Master 3S Mouse", 89, 47, "laptops", "GadgetHub"],
+  ["Samsung T7 Shield 2TB SSD", 149, 29, "laptops", "ComXpert"],
+];
+
 function seed() {
   if (db.vendors.length) return;
   const vendors = [
@@ -41,13 +75,24 @@ function seed() {
     { name: "GadgetHub", phone: "+263771000002", location: "CBD, Harare", categories: ["phones"] },
     { name: "AutoParts Co.", phone: "+263771000003", location: "Msasa, Harare", categories: ["parts"] },
     { name: "ComXpert", phone: "+263771000004", location: "Borrowdale, Harare", categories: ["laptops"] },
+    { name: "SoundWorld", phone: "+263771000005", location: "Avondale, Harare", categories: ["phones"] },
+    { name: "TyreKing", phone: "+263771000006", location: "Msasa, Harare", categories: ["parts"] },
+    { name: "OEM Direct", phone: "+263771000007", location: "Graniteside, Harare", categories: ["parts"] },
+    { name: "CarCare Plus", phone: "+263771000008", location: "Hatfield, Harare", categories: ["parts"] },
+    { name: "GameStop ZW", phone: "+263771000009", location: "Borrowdale, Harare", categories: ["phones", "laptops"] },
   ];
   vendors.forEach((v) => {
-    const vendor = { id: uid("ven"), ...v, payoutMethod: "ecocash", payoutPhone: v.phone, kycStatus: "verified", createdAt: now() };
-    db.vendors.push(vendor);
+    db.vendors.push({ id: uid("ven"), ...v, payoutMethod: "ecocash", payoutPhone: v.phone, kycStatus: "verified", createdAt: now() });
+  });
+  const byName = Object.fromEntries(db.vendors.map((v) => [v.name, v.id]));
+  CATALOGUE.forEach(([name, price, stock, category, vendorName]) => {
+    db.products.push({
+      id: uid("prd"), vendorId: byName[vendorName] || db.vendors[0].id,
+      name, price, stock, category, active: true, createdAt: now(),
+    });
   });
   save();
-  console.log("Seeded", db.vendors.length, "vendors");
+  console.log("Seeded", db.vendors.length, "vendors,", db.products.length, "products");
 }
 
 /* ---------------- HTTP helpers ---------------- */
@@ -107,7 +152,7 @@ function createOrder(b, res) {
   const lines = [];
   let subtotal = 0;
   for (const it of items) {
-    const p = db.products.find((x) => x.id === it.productId);
+    const p = db.products.find((x) => x.id === it.productId || x.name === it.productId);
     if (!p) return send(res, 404, { error: `Product ${it.productId} not found` });
     if (p.stock < it.qty) return send(res, 409, { error: `Insufficient stock for ${p.name}` });
     const lineTotal = p.price * it.qty;

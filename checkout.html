@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checkout — Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
+</head>
+<body>
+
+  <header class="header" style="position:static">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        </span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">← Continue shopping</a>
+        <a href="track.html" class="nav-link">Track Order</a>
+      </nav>
+    </div>
+  </header>
+
+  <div class="checkout-wrap">
+    <!-- Cart -->
+    <div class="checkout-card">
+      <h2>Your order</h2>
+      <div id="cartItems"></div>
+      <div class="co-total"><span>Total</span><span id="cartTotal">$0</span></div>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:10px">Delivery fee calculated at checkout for delivery orders. Free delivery over $100.</p>
+    </div>
+
+    <!-- Details -->
+    <div class="checkout-card" id="detailsCard">
+      <h2>Delivery &amp; payment</h2>
+      <form id="checkoutForm">
+        <div class="co-field"><label>Full name</label><input id="buyerName" required placeholder="e.g. Tinashe Moyo" /></div>
+        <div class="co-field"><label>Phone (EcoCash / OneMoney)</label><input id="buyerPhone" required placeholder="+263 7XX XXX XXX" /></div>
+
+        <div class="co-field">
+          <label>Fulfilment</label>
+          <div class="co-radio">
+            <label><input type="radio" name="fulfil" value="delivery" checked /> Delivery</label>
+            <label><input type="radio" name="fulfil" value="pickup" /> Pickup</label>
+          </div>
+        </div>
+
+        <div id="deliveryFields">
+          <div class="co-field"><label>Delivery address</label><input id="deliveryAddress" placeholder="Street, suburb, city" /></div>
+          <div class="co-field"><label>Zone</label>
+            <select id="deliveryZone">
+              <option value="harare-cbd">Harare CBD</option>
+              <option value="harare-suburbs" selected>Harare suburbs</option>
+              <option value="bulawayo">Bulawayo</option>
+              <option value="other-city">Other city</option>
+            </select>
+          </div>
+          <div class="co-field"><label>Distance (km, approx)</label><input id="distanceKm" type="number" min="1" value="5" /></div>
+        </div>
+
+        <div class="co-field">
+          <label>Payment method</label>
+          <div class="co-radio">
+            <label><input type="radio" name="pay" value="ecocash" checked /> EcoCash</label>
+            <label><input type="radio" name="pay" value="onemoney" /> OneMoney</label>
+            <label><input type="radio" name="pay" value="cash_pickup" /> Cash on pickup</label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" type="submit" style="width:100%" id="placeOrder">Place order</button>
+        <p id="formError" style="color:#b91c1c;font-size:.82rem;margin-top:10px;display:none"></p>
+      </form>
+    </div>
+
+    <!-- Success -->
+    <div class="checkout-card hidden" id="successCard" style="grid-column:1/-1">
+      <div class="co-success">
+        <div class="big">✓</div>
+        <h2 style="font-family:var(--font-head);font-size:1.3rem">Order placed!</h2>
+        <p style="color:var(--muted);font-size:.88rem" id="successMsg"></p>
+        <div class="pickup-code-lg" id="pickupCodeBox" style="display:none"></div>
+        <p style="font-size:.82rem;color:var(--muted)" id="orderIdLine"></p>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap">
+          <a class="btn btn-primary" id="trackLink" href="#">Track this order →</a>
+          <a class="btn btn-ghost" href="index.html" style="border:1px solid var(--line);color:var(--ink)">Continue shopping</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+  <script src="cart.js"></script>
+  <script src="checkout.js"></script>
+</body>
+</html>

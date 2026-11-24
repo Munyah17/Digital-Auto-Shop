@@ -102,7 +102,7 @@ function renderHero() {
           <div class="hero-ring"></div>
           <div class="hero-card hero-card-1"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><div><strong>iPhone 18 Pro</strong><span>From $2,000</span></div></div>
           <div class="hero-card hero-card-2"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span><div><strong>Joyroad Tyres</strong><span>From $32</span></div></div>
-          <div class="hero-card hero-card-3"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><div><strong>ThinkPad X1</strong><span>From $1,899</span></div></div>
+          <div class="hero-card hero-card-3"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><div><strong>HP ZBook Firefly g8</strong><span>From $450</span></div></div>
         </div>
       </div>
     </div>`;
@@ -131,7 +131,7 @@ function renderHero() {
           <div class="hero-ring"></div>
           <div class="hero-card hero-card-1"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg></span><div><strong>iPhone 18 Pro</strong><span>From $2,000</span></div></div>
           <div class="hero-card hero-card-2"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/></svg></span><div><strong>Joyroad Tyres</strong><span>From $32</span></div></div>
-          <div class="hero-card hero-card-3"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><div><strong>ThinkPad X1</strong><span>From $1,899</span></div></div>
+          <div class="hero-card hero-card-3"><span class="hc-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="11" rx="1.5"/><path d="M2 19h20"/></svg></span><div><strong>HP ZBook Firefly g8</strong><span>From $450</span></div></div>
         </div>
       </div>
     </div>`).join("");
@@ -216,24 +216,27 @@ document.querySelectorAll("[data-carousel]").forEach((car) => {
 });
 
 /* ================= Cart ================= */
-let cartCount = 0;
 const cartEl = document.getElementById("cartCount");
 const toast = document.getElementById("toast");
 let toastTimer;
 
 document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".p-add");
+  const buy = e.target.closest(".p-buy");
+  const add = e.target.closest(".p-add");
+  const btn = buy || add;
   if (!btn) return;
-  cartCount++;
-  cartEl.textContent = cartCount;
-  cartEl.classList.remove("bump");
-  void cartEl.offsetWidth;
-  cartEl.classList.add("bump");
+  const item = { name: btn.dataset.name, price: +btn.dataset.price, vendor: btn.dataset.vendor };
+  addToCart(item);
+  syncCartBadge();
+  cartEl?.classList.remove("bump");
+  void cartEl?.offsetWidth;
+  cartEl?.classList.add("bump");
 
-  toast.textContent = `Added to cart — ${fmt(+btn.dataset.price)}`;
+  toast.textContent = buy ? "Added — taking you to checkout…" : `Added to cart — ${fmt(item.price)}`;
   toast.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+  if (buy) setTimeout(() => (location.href = "checkout.html"), 600);
 });
 
 /* ================= Header / nav ================= */

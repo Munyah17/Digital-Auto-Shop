@@ -109,7 +109,10 @@ function productCard(p, { showSection = false } = {}) {
           <span class="p-price">${fmt(p.price)}</span>
           ${old}
         </div>
-        <button class="p-add" data-price="${p.price}">Add to Cart</button>
+        <div class="p-actions">
+          <button class="p-buy" data-name="${p.name}" data-price="${p.price}" data-vendor="${p.vendor}">Buy Now</button>
+          <button class="p-add" data-name="${p.name}" data-price="${p.price}" data-vendor="${p.vendor}">Add to Cart</button>
+        </div>
       </div>
     </article>`;
 }

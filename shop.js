@@ -58,22 +58,25 @@ const mobileNav = document.getElementById("mobileNav");
 burger.addEventListener("click", () => mobileNav.classList.toggle("open"));
 mobileNav.querySelectorAll("a").forEach((a) => a.addEventListener("click", () => mobileNav.classList.remove("open")));
 
-let cartCount = 0;
 const cartEl = document.getElementById("cartCount");
 const toast = document.getElementById("toast");
 let toastTimer;
 document.addEventListener("click", (e) => {
-  const btn = e.target.closest(".p-add");
+  const buy = e.target.closest(".p-buy");
+  const add = e.target.closest(".p-add");
+  const btn = buy || add;
   if (!btn) return;
-  cartCount++;
-  cartEl.textContent = cartCount;
+  const item = { name: btn.dataset.name, price: +btn.dataset.price, vendor: btn.dataset.vendor };
+  addToCart(item);
+  syncCartBadge();
   cartEl.classList.remove("bump");
   void cartEl.offsetWidth;
   cartEl.classList.add("bump");
-  toast.textContent = `Added to cart — ${fmt(+btn.dataset.price)}`;
+  toast.textContent = buy ? "Added — taking you to checkout…" : `Added to cart — ${fmt(item.price)}`;
   toast.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+  if (buy) setTimeout(() => (location.href = "checkout.html"), 600);
 });
 
 /* ---------- Filters ---------- */
