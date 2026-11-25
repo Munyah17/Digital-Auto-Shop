@@ -32,7 +32,7 @@
       <h2>Your order</h2>
       <div id="cartItems"></div>
       <div class="co-total"><span>Total</span><span id="cartTotal">$0</span></div>
-      <p style="font-size:.78rem;color:var(--muted);margin-top:10px">Delivery fee calculated at checkout for delivery orders. Free delivery over $100.</p>
+      <p style="font-size:.78rem;color:var(--muted);margin-top:10px">Delivery fee is calculated at checkout based on your zone and distance.</p>
     </div>
 
     <!-- Details -->
@@ -65,10 +65,30 @@
 
         <div class="co-field">
           <label>Payment method</label>
-          <div class="co-radio">
+          <div class="co-radio" style="flex-wrap:wrap">
             <label><input type="radio" name="pay" value="ecocash" checked /> EcoCash</label>
             <label><input type="radio" name="pay" value="onemoney" /> OneMoney</label>
+            <label><input type="radio" name="pay" value="card" /> Card / Paynow</label>
+            <label><input type="radio" name="pay" value="bank_transfer" /> Bank Transfer</label>
             <label><input type="radio" name="pay" value="cash_pickup" /> Cash on pickup</label>
+          </div>
+        </div>
+
+        <!-- Bank transfer details -->
+        <div id="bankBox" class="hidden" style="border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px;background:var(--blue-50)">
+          <p style="font-size:.82rem;font-weight:700;margin-bottom:8px">Bank transfer details</p>
+          <div id="bankDetails" style="font-size:.84rem;line-height:1.7"></div>
+          <p style="font-size:.76rem;color:var(--muted);margin-top:8px">A 5% bank charge applies to the total.</p>
+        </div>
+
+        <!-- Bank transfer required fields -->
+        <div id="bankFields" class="hidden">
+          <div class="co-field"><label>Transaction Reference / ID <span style="color:#b91c1c">*</span></label><input id="transactionRef" placeholder="e.g. FBC123456789" /></div>
+          <div class="co-field"><label>Email <span style="color:#b91c1c">*</span></label><input id="buyerEmail" type="email" placeholder="you@email.com" /></div>
+          <div class="co-field">
+            <label>Proof of Payment (PoP) — any format <span style="color:#b91c1c">*</span></label>
+            <input id="popFile" type="file" accept="image/*,.pdf,.doc,.docx" />
+            <p style="font-size:.74rem;color:var(--muted);margin-top:4px">After uploading, also email your PoP to <strong>payments@globalspaceweb.co.zw</strong> or WhatsApp <strong>+263773909307</strong>.</p>
           </div>
         </div>
 
@@ -85,6 +105,9 @@
         <p style="color:var(--muted);font-size:.88rem" id="successMsg"></p>
         <div class="pickup-code-lg" id="pickupCodeBox" style="display:none"></div>
         <p style="font-size:.82rem;color:var(--muted)" id="orderIdLine"></p>
+        <div id="bankSuccessNote" class="hidden" style="margin-top:14px;padding:14px;background:var(--blue-50);border-radius:12px;font-size:.84rem">
+          <strong>Next step:</strong> email your Proof of Payment to <strong>payments@globalspaceweb.co.zw</strong> or WhatsApp <strong>+263773909307</strong> with your order ID. We'll confirm payment and dispatch your order.
+        </div>
         <div style="display:flex;gap:10px;justify-content:center;margin-top:18px;flex-wrap:wrap">
           <a class="btn btn-primary" id="trackLink" href="#">Track this order →</a>
           <a class="btn btn-ghost" href="index.html" style="border:1px solid var(--line);color:var(--ink)">Continue shopping</a>

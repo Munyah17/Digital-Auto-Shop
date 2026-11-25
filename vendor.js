@@ -91,7 +91,7 @@ document.querySelectorAll(".tab").forEach((t) =>
   t.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
     t.classList.add("active");
-    ["inventory", "orders", "payouts"].forEach((k) =>
+    ["inventory", "pos", "orders", "payouts"].forEach((k) =>
       $("tab-" + k).classList.toggle("hidden", k !== t.dataset.tab)
     );
   })
@@ -110,6 +110,8 @@ async function refresh() {
   renderProducts();
   renderOrders();
   renderPayouts(payout);
+  renderPosProducts();
+  renderPosCart();
 }
 
 function renderStats(payout) {
@@ -210,6 +212,77 @@ $("orderRows").addEventListener("click", async (e) => {
       body: { to: btn.dataset.to, actor: "vendor" },
     });
     showToast("Order updated");
+    refresh();
+  } catch (err) { showToast(err.message); }
+});
+
+/* ---------- Point of Sale ---------- */
+let posCart = [];
+
+function renderPosProducts() {
+  const sel = $("posProduct");
+  const active = products.filter((p) => p.active !== false && p.stock > 0);
+  sel.innerHTML = active.map((p) =>
+    `<option value="${p.id}">${p.name} — ${fmt(p.price)} (${p.stock} in stock)</option>`
+  ).join("") || `<option value="">No products in stock</option>`;
+}
+
+function renderPosCart() {
+  const wrap = $("posCart");
+  if (!posCart.length) {
+    wrap.innerHTML = `<span style="color:var(--muted)">No items yet — pick a product and tap "Add to sale".</span>`;
+  } else {
+    wrap.innerHTML = posCart.map((c, i) => `
+      <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
+        <span>${c.qty}× ${c.name}</span>
+        <span>${fmt(c.price * c.qty)} <button type="button" data-posdel="${i}" style="border:none;background:none;color:#b91c1c;cursor:pointer;font-weight:700">✕</button></span>
+      </div>`).join("");
+  }
+  const total = posCart.reduce((s, c) => s + c.price * c.qty, 0);
+  $("posTotal").textContent = fmt(total);
+  $("posComplete").disabled = !posCart.length;
+}
+
+$("posAdd").addEventListener("click", () => {
+  const id = $("posProduct").value;
+  const p = products.find((x) => x.id === id);
+  const qty = Math.max(1, +$("posQty").value || 1);
+  if (!p) { showToast("Select a product"); return; }
+  const existing = posCart.find((c) => c.name === p.name);
+  if (existing) existing.qty += qty;
+  else posCart.push({ productId: p.id, name: p.name, price: p.price, qty });
+  renderPosCart();
+});
+
+$("posCart").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-posdel]");
+  if (!btn) return;
+  posCart.splice(+btn.dataset.posdel, 1);
+  renderPosCart();
+});
+
+$("posComplete").addEventListener("click", async () => {
+  if (!posCart.length) return;
+  try {
+    const order = await api("/pos/sale", {
+      method: "POST",
+      body: {
+        vendorId: vendor.id,
+        items: posCart.map((c) => ({ productId: c.productId, qty: c.qty })),
+        paymentMethod: $("posPay").value,
+        buyerPhone: $("posPhone").value.trim() || undefined,
+      },
+    });
+    $("posReceipt").classList.remove("hidden");
+    $("posReceipt").innerHTML = `
+      <strong>Sale complete — ${order.id}</strong><br/>
+      ${order.lines.map((l) => `${l.qty}× ${l.name}`).join("<br/>")}
+      <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
+        Total: <strong>${fmt(order.total)}</strong> • Commission: ${fmt(order.commission)} • Net: ${fmt(order.total - order.commission)}
+      </div>`;
+    posCart = [];
+    renderPosCart();
+    showToast("Sale recorded");
     refresh();
   } catch (err) { showToast(err.message); }
 });

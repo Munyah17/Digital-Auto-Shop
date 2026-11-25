@@ -18,6 +18,21 @@ const STORE_FILE = path.join(DATA_DIR, "store.json");
 const COMMISSION_PCT = 8;          // platform commission on every sale
 const PAYOUT_HOLD_DAYS = 3;        // seller payout released N days after delivery confirmation
 
+/* Paynow Zimbabwe — override via env vars in production */
+const PAYNOW = {
+  id: process.env.PAYNOW_ID || "24720",
+  key: process.env.PAYNOW_KEY || "d40d9ce1-9737-4b2d-bc2b-bef0770c8744",
+};
+const PAYNOW_INITIATE_URL = "https://www.paynow.co.zw/interface/initiatetransaction";
+const POP_DIR = path.join(DATA_DIR, "pops");
+const BANK_DETAILS = {
+  accountName: "Solabliss Zimbabwe Pvt Ltd",
+  bank: "FBC Bank",
+  branch: "FBC Center Branch",
+  account: "6870465460146",
+  currency: "USD",
+};
+
 let db = { vendors: [], products: [], orders: [], settings: { commissionPct: COMMISSION_PCT } };
 
 function load() {
@@ -125,7 +140,7 @@ const DELIVERY_RATES = {
     "other-city":      { base: 10, perKm: 2.0 },
   },
   surcharges: { bulky: 5, fragile: 3, heavy: 8 },  // applied per order flags
-  freeAbove: 100,                                 // free delivery threshold
+  freeAbove: Number.POSITIVE_INFINITY,            // no free delivery
 };
 
 function deliveryFee({ zone = "harare-suburbs", km = 5, bulky = false, fragile = false, heavy = false, orderTotal = 0 }) {
@@ -144,9 +159,14 @@ function deliveryFee({ zone = "harare-suburbs", km = 5, bulky = false, fragile =
  */
 
 function createOrder(b, res) {
-  const { items = [], fulfillment = "delivery", deliveryAddress, deliveryZone, distanceKm, paymentMethod = "ecocash", buyerPhone, buyerName } = b;
+  const { items = [], fulfillment = "delivery", deliveryAddress, deliveryZone, distanceKm, paymentMethod = "ecocash", buyerPhone, buyerName, transactionRef, email, pop } = b;
   if (!items.length) return send(res, 400, { error: "Cart is empty" });
   if (!buyerPhone) return send(res, 400, { error: "buyerPhone required" });
+  if (paymentMethod === "bank_transfer") {
+    if (!transactionRef) return send(res, 400, { error: "Transaction reference is required for bank transfer" });
+    if (!email) return send(res, 400, { error: "Email is required for bank transfer" });
+    if (!pop) return send(res, 400, { error: "Proof of payment upload is required for bank transfer" });
+  }
 
   // validate stock & price server-side
   const lines = [];
@@ -181,7 +201,9 @@ function createOrder(b, res) {
     total: subtotal + fee,
     commission,
     paymentMethod,
-    status: paymentMethod === "cash_pickup" ? "awaiting_pickup_payment" : "pending_payment",
+    transactionRef: transactionRef || null,
+    email: email || null,
+    status: paymentMethod === "cash_pickup" && fulfillment === "pickup" ? "awaiting_pickup_payment" : "pending_payment",
     pickupCode: fulfillment === "pickup" ? String(Math.floor(100000 + Math.random() * 900000)) : null,
     vendorContacts: [],   // filled below for pickup orders
     createdAt: now(),
@@ -201,6 +223,17 @@ function createOrder(b, res) {
   for (const it of items) {
     const p = db.products.find((x) => x.id === it.productId);
     p.stock -= it.qty;
+  }
+
+  // save proof-of-payment file for bank transfers
+  if (pop) {
+    const m = String(pop).match(/^data:(.*?);base64,(.*)$/s);
+    if (m) {
+      const ext = (m[1].split("/")[1] || "bin").split(";")[0].replace("jpeg", "jpg");
+      fs.mkdirSync(POP_DIR, { recursive: true });
+      order.popPath = path.join(POP_DIR, order.id + "." + ext);
+      fs.writeFileSync(order.popPath, Buffer.from(m[2], "base64"));
+    }
   }
 
   db.orders.push(order);
@@ -321,6 +354,129 @@ const routes = [
       commissionDeducted: Math.round(commission * 100) / 100,
       netPayable: Math.round((gross - commission) * 100) / 100,
     });
+  }),
+
+  // Bank transfer details (shown to buyer; PoP emailed/WhatsApp'd to us)
+  route(/^\/api\/bank-details$/, "GET", (req, res) => send(res, 200, BANK_DETAILS)),
+
+  // Paynow — initiate hosted checkout, returns redirect URL
+  route(/^\/api\/paynow\/initiate$/, "POST", async (req, res) => {
+    const b = await body(req);
+    const { amount, reference, description = "Digital Auto Shop order" } = b;
+    if (!amount || !reference) return send(res, 400, { error: "amount and reference required" });
+    const params = {
+      id: PAYNOW.id,
+      reference: String(reference),
+      amount: Number(amount).toFixed(2),
+      additionalinfo: description,
+      returnurl: "http://localhost:8080/checkout.html?paid=1",
+      resulturl: "http://localhost:3000/api/paynow/result",
+      status: "Message",
+    };
+    const hash = crypto.createHash("sha512").update(Object.values(params).join("")).digest("hex");
+    try {
+      const r = await fetch(PAYNOW_INITIATE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ ...params, hash }),
+      });
+      const text = await r.text();
+      const resp = Object.fromEntries(new URLSearchParams(text));
+      if (resp.status !== "Ok" || !resp.browserurl) {
+        return send(res, 502, { error: "Paynow initiation failed", detail: text });
+      }
+      send(res, 200, { redirectUrl: resp.browserurl, pollUrl: resp.pollurl, reference: params.reference });
+    } catch (e) {
+      send(res, 502, { error: "Paynow unreachable: " + e.message });
+    }
+  }),
+
+  // Paynow result webhook — verify via poll URL, then escrow the order
+  route(/^\/api\/paynow\/result$/, "POST", async (req, res) => {
+    const b = await body(req);
+    try {
+      if (b.pollurl) {
+        const poll = await (await fetch(b.pollurl)).text();
+        const p = Object.fromEntries(new URLSearchParams(poll));
+        if (p.status === "Paid") {
+          const order = db.orders.find((o) => o.id === b.reference);
+          if (order && order.status === "pending_payment") {
+            order.status = "paid_escrow";
+            order.paynowRef = b.paynowreference || null;
+            order.events.push({ at: now(), status: "paid_escrow", actor: "paynow" });
+            save();
+          }
+        }
+      }
+    } catch (e) { /* still ack Paynow */ }
+    send(res, 200, { ok: true });
+  }),
+  route(/^\/api\/paynow\/result$/, "GET", async (req, res) => {
+    const url = new URL(req.url, "http://x");
+    await new Promise((resolve) => {
+      const b = Object.fromEntries(url.searchParams);
+      (async () => {
+        try {
+          if (b.pollurl) {
+            const poll = await (await fetch(b.pollurl)).text();
+            const p = Object.fromEntries(new URLSearchParams(poll));
+            if (p.status === "Paid") {
+              const order = db.orders.find((o) => o.id === b.reference);
+              if (order && order.status === "pending_payment") {
+                order.status = "paid_escrow";
+                order.events.push({ at: now(), status: "paid_escrow", actor: "paynow" });
+                save();
+              }
+            }
+          }
+        } catch (e) {}
+        resolve();
+      })();
+    });
+    send(res, 200, { ok: true });
+  }),
+
+  // Point of Sale — immediate in-store sale, stock decremented, order completed
+  route(/^\/api\/pos\/sale$/, "POST", async (req, res) => {
+    const b = await body(req);
+    const { vendorId, items = [], paymentMethod = "cash", buyerPhone, buyerName } = b;
+    const vendor = db.vendors.find((v) => v.id === vendorId);
+    if (!vendor) return send(res, 404, { error: "Vendor not found" });
+    if (!items.length) return send(res, 400, { error: "Cart is empty" });
+
+    const lines = [];
+    let subtotal = 0;
+    for (const it of items) {
+      const p = db.products.find((x) => x.id === it.productId || x.name === it.productId);
+      if (!p) return send(res, 404, { error: `Product ${it.productId} not found` });
+      if (p.vendorId !== vendorId) return send(res, 403, { error: `${p.name} is not in your inventory` });
+      if (p.stock < it.qty) return send(res, 409, { error: `Insufficient stock for ${p.name}` });
+      const lineTotal = p.price * it.qty;
+      subtotal += lineTotal;
+      lines.push({ productId: p.id, vendorId: p.vendorId, name: p.name, qty: it.qty, unitPrice: p.price, lineTotal });
+    }
+
+    const commission = Math.round(subtotal * (db.settings.commissionPct / 100) * 100) / 100;
+    const order = {
+      id: uid("pos"), pos: true,
+      buyer: { name: buyerName || "Walk-in customer", phone: buyerPhone || vendor.phone },
+      fulfillment: "pickup",
+      lines, subtotal, deliveryFee: 0, total: subtotal, commission,
+      paymentMethod,
+      status: "completed",
+      createdAt: now(),
+      events: [
+        { at: now(), status: "created", actor: "pos" },
+        { at: now(), status: "completed", actor: "pos" },
+      ],
+    };
+    for (const it of items) {
+      const p = db.products.find((x) => x.id === it.productId || x.name === it.productId);
+      p.stock -= it.qty;
+    }
+    db.orders.push(order);
+    save();
+    send(res, 201, order);
   }),
 
   // Admin: slides (mirrors localStorage for production)

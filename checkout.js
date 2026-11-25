@@ -35,8 +35,10 @@ function updateTotal() {
   const cart = getCart();
   const subtotal = cartTotal();
   const fulfil = document.querySelector('input[name="fulfil"]:checked')?.value;
-  const total = subtotal + (fulfil === "delivery" ? deliveryFee : 0);
-  $("cartTotal").textContent = fmt(total);
+  const pay = document.querySelector('input[name="pay"]:checked')?.value;
+  let fee = fulfil === "delivery" ? deliveryFee : 0;
+  if (pay === "bank_transfer") fee += (subtotal + fee) * 0.05; // 5% bank charge
+  $("cartTotal").textContent = fmt(subtotal + fee);
 }
 
 async function quoteFee() {
@@ -50,11 +52,35 @@ async function quoteFee() {
     feeInfo = await (await fetch(`/api/delivery-fee?${q}`)).json();
     deliveryFee = feeInfo.fee || 0;
   } catch {
-    // fallback rate if API offline
-    deliveryFee = total >= 100 ? 0 : 4 + 1.1 * km;
-    feeInfo = { fee: deliveryFee, freeDeliveryApplied: total >= 100 };
+    // fallback rate if API offline — no free delivery
+    deliveryFee = 4 + 1.1 * km;
+    feeInfo = { fee: deliveryFee, freeDeliveryApplied: false };
   }
   updateTotal();
+}
+
+/* Payment method toggle — bank transfer fields + Paynow note */
+document.querySelectorAll('input[name="pay"]').forEach((r) =>
+  r.addEventListener("change", () => {
+    const isBank = r.value === "bank_transfer" && r.checked;
+    $("bankBox").classList.toggle("hidden", !isBank);
+    $("bankFields").classList.toggle("hidden", !isBank);
+    if (isBank) loadBankDetails();
+    updateTotal();
+  })
+);
+
+async function loadBankDetails() {
+  try {
+    const d = await (await fetch("/api/bank-details")).json();
+    $("bankDetails").innerHTML =
+      `<div><strong>Account Name:</strong> ${d.accountName}</div>` +
+      `<div><strong>Bank:</strong> ${d.bank}</div>` +
+      `<div><strong>Branch:</strong> ${d.branch}</div>` +
+      `<div><strong>${d.currency} Account:</strong> ${d.account}</div>`;
+  } catch {
+    $("bankDetails").innerHTML = "<em>Bank details unavailable — API offline.</em>";
+  }
 }
 
 /* Fulfilment toggle */
@@ -95,6 +121,27 @@ $("checkoutForm").addEventListener("submit", async (e) => {
   const fulfil = document.querySelector('input[name="fulfil"]:checked').value;
   const pay = document.querySelector('input[name="pay"]:checked').value;
 
+  // bank transfer validation
+  if (pay === "bank_transfer") {
+    if (!$("transactionRef").value.trim()) { err.textContent = "Transaction reference is required."; err.style.display = "block"; return; }
+    if (!$("buyerEmail").value.trim()) { err.textContent = "Email is required."; err.style.display = "block"; return; }
+    if (!$("popFile").files.length) { err.textContent = "Please upload your Proof of Payment."; err.style.display = "block"; return; }
+  }
+
+  // read PoP file as data URL
+  let popData = null;
+  if (pay === "bank_transfer" && $("popFile").files.length) {
+    popData = await new Promise((resolve, reject) => {
+      const f = $("popFile").files[0];
+      if (f.size > 8 * 1024 * 1024) return reject(new Error("PoP file too large (max 8MB)"));
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(f);
+    }).catch((e2) => { err.textContent = e2.message; err.style.display = "block"; return null; });
+    if (!popData) return;
+  }
+
   const body = {
     buyerName: $("buyerName").value.trim(),
     buyerPhone: $("buyerPhone").value.trim(),
@@ -102,6 +149,11 @@ $("checkoutForm").addEventListener("submit", async (e) => {
     paymentMethod: pay,
     items: cart.map((c) => ({ name: c.name, qty: c.qty })),
   };
+  if (pay === "bank_transfer") {
+    body.transactionRef = $("transactionRef").value.trim();
+    body.email = $("buyerEmail").value.trim();
+    body.pop = popData;
+  }
   if (fulfil === "delivery") {
     body.deliveryAddress = $("deliveryAddress").value.trim();
     body.deliveryZone = $("deliveryZone").value;
@@ -127,6 +179,22 @@ $("checkoutForm").addEventListener("submit", async (e) => {
     const order = await res.json();
     if (!res.ok) throw new Error(order.error || "Order failed");
 
+    // Paynow methods → redirect to hosted checkout
+    if (["ecocash", "onemoney", "card"].includes(pay)) {
+      try {
+        const init = await (await fetch("/api/paynow/initiate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ amount: order.total, reference: order.id, description: `Order ${order.id}` }),
+        })).json();
+        if (init.redirectUrl) {
+          sessionStorage.setItem("pendingOrderId", order.id);
+          location.href = init.redirectUrl;
+          return;
+        }
+      } catch { /* fall through to success screen */ }
+    }
+
     clearCart();
     syncCartBadge();
     $("detailsCard").classList.add("hidden");
@@ -140,6 +208,7 @@ $("checkoutForm").addEventListener("submit", async (e) => {
       $("pickupCodeBox").style.display = "block";
       $("pickupCodeBox").textContent = order.pickupCode;
     }
+    if (pay === "bank_transfer") $("bankSuccessNote").classList.remove("hidden");
     $("orderIdLine").textContent = `Order ID: ${order.id} — Total: ${fmt(order.total)}`;
     $("trackLink").href = `track.html`;
     sessionStorage.setItem("lastOrderId", order.id);
