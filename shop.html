@@ -11,14 +11,6 @@
 </head>
 <body>
 
-  <div class="announce">
-    <span>Paynow • EcoCash • OneMoney • Bank transfer</span>
-    <span class="announce-dot">•</span>
-    <span>Pay on delivery available</span>
-    <span class="announce-dot">•</span>
-    <span>Harare &amp; Bulawayo same-day dispatch</span>
-  </div>
-
   <header class="header" id="header">
     <div class="container header-inner">
       <a href="index.html" class="logo">
@@ -28,14 +20,19 @@
         <span class="logo-text">Digital<em>Auto</em>Shop</span>
       </a>
       <nav class="nav">
-        <a href="index.html#best-picks" class="nav-link">Best Picks</a>
-        <a href="index.html#phones" class="nav-link">Phones &amp; Gadgets</a>
-        <a href="index.html#parts" class="nav-link">Vehicle Parts</a>
-        <a href="index.html#laptops" class="nav-link">Laptops</a>
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html?category=phones-gadgets" class="nav-link">Phones &amp; Gadgets</a>
+        <a href="shop.html?category=vehicle-parts" class="nav-link">Vehicle Parts</a>
+        <a href="shop.html?category=laptops-accessories" class="nav-link">Laptops &amp; Accessories</a>
         <a href="shop.html" class="nav-link active">Shop All</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="contact.html" class="nav-link">Contact</a>
       </nav>
       <div class="header-actions">
         <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <a href="account.html" class="icon-btn" aria-label="Account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 19.2a7 7 0 0 1 14 0"/></svg>
+        </a>
         <button class="icon-btn cart-btn" aria-label="Cart">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg>
           <span class="cart-count" id="cartCount">0</span>
@@ -46,11 +43,14 @@
       </div>
     </div>
     <div class="mobile-nav" id="mobileNav">
-      <a href="index.html#best-picks">Best Picks</a>
-      <a href="index.html#phones">Phones &amp; Gadgets</a>
-      <a href="index.html#parts">Vehicle Parts</a>
-      <a href="index.html#laptops">Laptops</a>
+      <a href="index.html">Home</a>
+      <a href="shop.html?category=phones-gadgets">Phones &amp; Gadgets</a>
+      <a href="shop.html?category=vehicle-parts">Vehicle Parts</a>
+      <a href="shop.html?category=laptops-accessories">Laptops &amp; Accessories</a>
       <a href="shop.html">Shop All</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="account.html">Account</a>
     </div>
   </header>
 
@@ -79,9 +79,6 @@
       <h3>Fulfilment</h3>
       <label class="f-check"><input type="checkbox" id="inStockOnly" /><span>In stock only</span></label>
       <label class="f-check"><input type="checkbox" id="onSaleOnly" /><span>On sale</span></label>
-
-      <h3>Rating</h3>
-      <div id="ratingFilters"></div>
 
       <button class="btn btn-primary" id="clearFilters" style="width:100%;margin-top:14px;font-size:.82rem">Clear all</button>
     </aside>
@@ -121,23 +118,23 @@
       </div>
       <div class="footer-col">
         <h4>Shop</h4>
-        <a href="shop.html?category=best-picks">Best Picks</a>
+        <a href="index.html">Home</a>
         <a href="shop.html?category=phones-gadgets">Phones &amp; Gadgets</a>
         <a href="shop.html?category=vehicle-parts">Vehicle Parts</a>
-        <a href="shop.html?category=laptops-accessories">Laptops</a>
+        <a href="shop.html?category=laptops-accessories">Laptops &amp; Accessories</a>
       </div>
       <div class="footer-col">
         <h4>Support</h4>
-        <a href="#">Track Order</a>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="track.html">Track Order</a>
         <a href="#">Returns &amp; Warranty</a>
-        <a href="#">Payment Options</a>
-        <a href="#">FAQs</a>
       </div>
       <div class="footer-col">
         <h4>Contact</h4>
-        <a href="tel:+263771234567">+263 77 123 4567</a>
-        <a href="mailto:hello@digitalautoshop.co.zw">hello@digitalautoshop.co.zw</a>
-        <a href="#">Sam Levy's, Harare</a>
+        <a href="tel:+263773909307">+263 77 390 9307</a>
+        <a href="mailto:info@globalspaceweb.co.zw">info@globalspaceweb.co.zw</a>
+        <a href="https://www.google.com/maps/search/?api=1&query=24+Midlothian+Avenue,+Eastlea,+Harare" target="_blank" rel="noopener">24 Midlothian Avenue, Eastlea, Harare</a>
       </div>
     </div>
     <div class="footer-bottom">

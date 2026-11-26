@@ -15,8 +15,8 @@ const DEFAULT_SLIDES = [
     title: "Everything your car, phone & work needs.",
     titleAccent: "phone & work",
     subtitle: "Phones, gadgets, genuine vehicle parts and laptops — all under one roof, delivered fast across Zimbabwe.",
-    ctaText: "Shop Best Picks",
-    ctaLink: "#best-picks",
+    ctaText: "Shop Now",
+    ctaLink: "shop.html",
     cta2Text: "Talk to an Expert",
     cta2Link: "#cta",
   },
@@ -258,19 +258,6 @@ const io = new IntersectionObserver(
   { threshold: 0.1 }
 );
 document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
-
-/* ================= Active nav link ================= */
-const sections = document.querySelectorAll("section[id]");
-const navLinks = document.querySelectorAll(".nav-link");
-window.addEventListener("scroll", () => {
-  let current = "";
-  sections.forEach((s) => {
-    if (window.scrollY >= s.offsetTop - 120) current = s.id;
-  });
-  navLinks.forEach((l) =>
-    l.classList.toggle("active", l.getAttribute("href") === "#" + current)
-  );
-}, { passive: true });
 
 /* ================= Init ================= */
 renderHero();

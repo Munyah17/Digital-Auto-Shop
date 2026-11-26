@@ -9,7 +9,6 @@ const state = {
   max: null,
   inStock: false,
   onSale: false,
-  minRating: 0,
   sort: "featured",
 };
 
@@ -36,17 +35,6 @@ catFiltersEl.addEventListener("change", (e) => {
   if (e.target.name !== "cat") return;
   state.category = e.target.value;
   state.cats.clear();
-  applyFilters();
-});
-
-const ratingEl = document.getElementById("ratingFilters");
-ratingEl.innerHTML = [4, 3, 2].map((r) =>
-  `<label class="f-check"><input type="radio" name="rating" value="${r}" ${state.minRating === r ? "checked" : ""}/><span>${"★".repeat(r)} & up</span></label>`
-).join("") + `<label class="f-check"><input type="radio" name="rating" value="0" ${state.minRating === 0 ? "checked" : ""}/><span>Any rating</span></label>`;
-
-ratingEl.addEventListener("change", (e) => {
-  if (e.target.name !== "rating") return;
-  state.minRating = +e.target.value;
   applyFilters();
 });
 
@@ -106,7 +94,7 @@ document.getElementById("sortSelect").addEventListener("change", (e) => {
 });
 document.getElementById("clearFilters").addEventListener("click", () => {
   state.category = "all"; state.query = ""; state.min = state.max = null;
-  state.inStock = state.onSale = false; state.minRating = 0; state.sort = "featured";
+  state.inStock = state.onSale = false; state.sort = "featured";
   document.getElementById("searchInput").value = "";
   document.getElementById("minPrice").value = "";
   document.getElementById("maxPrice").value = "";
@@ -114,7 +102,6 @@ document.getElementById("clearFilters").addEventListener("click", () => {
   document.getElementById("onSaleOnly").checked = false;
   document.getElementById("sortSelect").value = "featured";
   catFiltersEl.querySelector('input[value="all"]').checked = true;
-  ratingEl.querySelector('input[value="0"]').checked = true;
   applyFilters();
 });
 document.getElementById("filtersToggle").addEventListener("click", () => {
@@ -140,7 +127,6 @@ function getFiltered() {
   if (state.max !== null) list = list.filter((p) => p.price <= state.max);
   if (state.inStock) list = list.filter((p) => p.stock > 0);
   if (state.onSale) list = list.filter((p) => p.old !== null);
-  if (state.minRating) list = list.filter((p) => p.rating >= state.minRating);
 
   switch (state.sort) {
     case "price-asc": list.sort((a, b) => a.price - b.price); break;
@@ -153,6 +139,8 @@ function getFiltered() {
 }
 
 function applyFilters() {
+  syncHeading();
+  markNav();
   const list = getFiltered();
   const grid = document.getElementById("shopGrid");
   document.getElementById("shopCount").textContent = `${list.length} product${list.length === 1 ? "" : "s"}`;
@@ -169,15 +157,30 @@ function applyFilters() {
   grid.innerHTML = list.map((p) => productCard(p, { showSection: true })).join("");
 }
 
-/* ---------- Page title ---------- */
-const catLabel = CATEGORIES[Object.keys(CAT_MAP).find((k) => CAT_MAP[k] === CAT_MAP[state.category])] || null;
-if (state.category !== "all") {
-  const slug = state.category;
-  const entry = Object.entries(CATEGORIES).find(([, c]) => c.slug === slug);
-  if (entry) {
-    document.getElementById("pageTitle").textContent = entry[1].label;
-    document.getElementById("pageSub").textContent = `Showing ${entry[1].label.toLowerCase()} — ${ALL_PRODUCTS.filter((p) => p.section === CAT_MAP[slug]).length} products available.`;
+function syncHeading() {
+  const entry = Object.entries(CATEGORIES).find(([, c]) => c.slug === state.category);
+  const title = document.getElementById("pageTitle");
+  const sub = document.getElementById("pageSub");
+  if (!entry) {
+    title.textContent = "Shop All";
+    sub.textContent = "Browse our full catalogue — phones, gadgets, vehicle parts and laptops.";
+    document.title = "Shop All Products — Digital Auto Shop";
+    return;
   }
+  const count = ALL_PRODUCTS.filter((p) => p.section === CAT_MAP[state.category]).length;
+  title.textContent = entry[1].label;
+  sub.textContent = `Showing ${entry[1].label.toLowerCase()} only — ${count} products available.`;
+  document.title = `${entry[1].label} — Digital Auto Shop`;
+}
+
+function markNav() {
+  document.querySelectorAll(".nav-link, .mobile-nav a").forEach((a) => {
+    const href = a.getAttribute("href") || "";
+    const active = state.category === "all"
+      ? href === "shop.html"
+      : href.indexOf("category=" + state.category) !== -1;
+    a.classList.toggle("active", active);
+  });
 }
 
 applyFilters();

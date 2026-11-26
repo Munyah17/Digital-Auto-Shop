@@ -1,4 +1,4 @@
-/* Order tracking — GET /api/orders then filter client-side (add auth later) */
+/* Order tracking — public lookup by order ID */
 
 const STEPS = [
   "pending_payment",
@@ -32,9 +32,9 @@ $("trackForm").addEventListener("submit", async (e) => {
   const out = $("result");
   out.innerHTML = `<p style="color:var(--muted);margin-top:20px">Looking up order…</p>`;
   try {
-    const orders = await (await fetch("/api/orders")).json();
-    const o = orders.find((x) => x.id === id || x.id.endsWith(id));
-    if (!o) throw new Error("Order not found — check the ID.");
+    const res = await fetch("/api/orders/lookup?ref=" + encodeURIComponent(id));
+    const o = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(o.error || "Could not find that order");
     render(o, out);
   } catch (err) {
     out.innerHTML = `<p style="color:#b91c1c;margin-top:20px">${err.message}</p>`;
@@ -83,4 +83,10 @@ function render(o, out) {
     <div style="font-size:.85rem;margin-bottom:8px"><strong>Items</strong></div>
     ${o.lines.map((l) => `<div style="font-size:.85rem;padding:4px 0">${l.qty}× ${l.name} — ${fmt(l.lineTotal)}</div>`).join("")}
     <div class="timeline">${stepsHtml}${cancelledHtml}</div>`;
+}
+
+const presetOrder = new URLSearchParams(location.search).get("order");
+if (presetOrder) {
+  $("orderId").value = presetOrder;
+  $("trackForm").requestSubmit();
 }

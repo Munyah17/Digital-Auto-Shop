@@ -20,17 +20,60 @@
         <span class="logo-text">Digital<em>Auto</em>Shop</span>
       </a>
       <nav class="nav">
-        <a href="index.html" class="nav-link">← Back to site</a>
-        <a href="admin.html" class="nav-link active">Hero Slides</a>
-        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode" style="margin-left:auto"></button>
+        <a href="index.html" class="nav-link">← Storefront</a>
+        <a href="admin.html" class="nav-link active">Admin portal</a>
+        <a href="vendor.html" class="nav-link">Vendor portal</a>
       </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Storefront</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="admin.html" class="active">Admin portal</a>
+      <a href="vendor.html">Vendor portal</a>
+      <a href="account.html">Customer account</a>
     </div>
   </header>
 
-  <div class="admin-wrap">
+  <div class="login-card" id="loginCard">
+    <h1>Super Admin</h1>
+    <p>Sign in to the admin portal. Orders, customers, vendors, mail and homepage slides.</p>
+    <input id="adminUser" placeholder="Username" autocomplete="username" />
+    <input id="adminPass" type="password" placeholder="Password" autocomplete="current-password" />
+    <div class="login-error" id="loginError"></div>
+    <button class="btn btn-solid" id="loginBtn">Sign in</button>
+  </div>
+
+  <div class="admin-wrap hidden portal" id="adminPanel">
+    <div class="portal-head">
+      <div>
+        <h1>Admin portal</h1>
+        <p>Orders, customers, vendors and the homepage.</p>
+      </div>
+      <button class="btn btn-line" id="adminLogout" type="button">Sign out</button>
+    </div>
+    <div class="portal-tabs" id="adminTabs">
+      <button class="portal-tab active" type="button" data-tab="overview">Overview</button>
+      <button class="portal-tab" type="button" data-tab="orders">Orders</button>
+      <button class="portal-tab" type="button" data-tab="customers">Customers</button>
+      <button class="portal-tab" type="button" data-tab="vendors">Vendors</button>
+      <button class="portal-tab" type="button" data-tab="slides">Hero slides</button>
+      <button class="portal-tab" type="button" data-tab="mail">Mailbox</button>
+    </div>
+    <div data-panel="overview">
+      <div class="portal-stats" id="overviewStats"></div>
+    </div>
+    <div data-panel="orders" class="hidden" id="adminOrders"></div>
+    <div data-panel="customers" class="hidden" id="adminCustomers"></div>
+    <div data-panel="vendors" class="hidden" id="adminVendors"></div>
+    <div data-panel="slides" class="hidden">
     <div class="admin-head">
-      <h1>Super Admin — Hero Slides</h1>
-      <p>Manage up to 10 homepage banner slides. A slide only appears on the site when it's <strong>active</strong> and has a <strong>banner</strong> assigned.</p>
+      <h1>Hero slides</h1>
+      <p>A slide appears on the homepage when it is active and has a banner.</p>
     </div>
 
     <div class="admin-note">
@@ -42,16 +85,24 @@
 
     <div id="slideList"></div>
 
-    <button class="btn btn-primary" id="addSlide" style="margin-bottom:24px">+ Add slide (max 10)</button>
+    <button class="btn btn-solid" id="addSlide" style="margin-bottom:24px">+ Add slide (max 10)</button>
 
     <div style="display:flex;gap:12px;flex-wrap:wrap">
       <button class="btn btn-ghost" id="resetDefaults" style="border:1px solid var(--line);color:var(--ink)">Reset to defaults</button>
-      <a class="btn btn-primary" href="index.html" target="_blank" rel="noopener">Preview homepage →</a>
+      <a class="btn btn-solid" href="index.html" target="_blank" rel="noopener">Preview homepage →</a>
+    </div>
+
+    </div>
+    <div data-panel="mail" class="hidden" id="mailBox">
+      <strong>Mailbox</strong>
+      <p id="mailStatus" style="margin-top:6px">Loading notifications…</p>
+      <div id="mailList"></div>
     </div>
   </div>
 
   <div class="toast" id="toast">Saved</div>
 
+  <script src="page.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

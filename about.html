@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
+</head>
+<body>
+
+  <header class="header" id="header">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+        </span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="shop.html?category=phones-gadgets" class="nav-link">Phones &amp; Gadgets</a>
+        <a href="shop.html?category=vehicle-parts" class="nav-link">Vehicle Parts</a>
+        <a href="shop.html?category=laptops-accessories" class="nav-link">Laptops &amp; Accessories</a>
+        <a href="shop.html" class="nav-link">Shop All</a>
+        <a href="about.html" class="nav-link active">About</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <a href="account.html" class="icon-btn" aria-label="Account">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="3.2"/><path d="M5 19.2a7 7 0 0 1 14 0"/></svg>
+        </a>
+        <button class="icon-btn cart-btn" aria-label="Cart">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6h15l-1.5 9h-12z"/><path d="M6 6 5 3H2"/><circle cx="9" cy="20" r="1.6"/><circle cx="17" cy="20" r="1.6"/></svg>
+          <span class="cart-count" id="cartCount">0</span>
+        </button>
+        <button class="burger" id="burger" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Home</a>
+      <a href="shop.html?category=phones-gadgets">Phones &amp; Gadgets</a>
+      <a href="shop.html?category=vehicle-parts">Vehicle Parts</a>
+      <a href="shop.html?category=laptops-accessories">Laptops &amp; Accessories</a>
+      <a href="shop.html">Shop All</a>
+      <a href="about.html" class="active">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="account.html">Account</a>
+    </div>
+  </header>
+
+  <section class="page-hero">
+    <div class="container">
+      <h1>About Digital Auto Shop</h1>
+      <p>Phones, gadgets, vehicle parts and laptops from Eastlea, Harare.</p>
+    </div>
+  </section>
+
+  <main class="page-wrap">
+    <div class="prose-grid">
+      <article class="story-card">
+        <h2>One shop for the things you use every day</h2>
+        <p>Digital Auto Shop is a Harare marketplace for phones, gadgets, genuine vehicle parts, and laptops. The shop is at 24 Midlothian Avenue, Eastlea, and local vendors list their stock here so you can buy from one place.</p>
+        <p>Orders go out nationwide. Place an order before 2pm and we dispatch the same day. Pay online, or pay when the order arrives. If you need a part fitted, our team can install it for you.</p>
+        <p>Every listing shows the vendor, the price in US dollars, and what is in stock, so you know who you are buying from before you check out.</p>
+      </article>
+      <aside class="side-card">
+        <h2>Visit or call</h2>
+        <div class="contact-list">
+          <a href="https://www.google.com/maps/search/?api=1&query=24+Midlothian+Avenue,+Eastlea,+Harare" target="_blank" rel="noopener">
+            <small>Address</small>
+            <span>24 Midlothian Avenue, Eastlea, Harare</span>
+          </a>
+          <a href="tel:+263773909307">
+            <small>Phone</small>
+            <span>+263 77 390 9307</span>
+          </a>
+          <a href="mailto:info@globalspaceweb.co.zw">
+            <small>Email</small>
+            <span>info@globalspaceweb.co.zw</span>
+          </a>
+          <a href="contact.html">
+            <small>Hours</small>
+            <span>Mon–Sat, 8am–6pm</span>
+          </a>
+        </div>
+        <div class="contact-actions">
+          <a class="btn btn-solid" href="contact.html">Contact us</a>
+          <a class="btn btn-line" href="https://wa.me/263773909307" target="_blank" rel="noopener">WhatsApp</a>
+        </div>
+      </aside>
+    </div>
+
+    <div class="about-points">
+      <div class="about-point">
+        <strong>Phones &amp; Gadgets</strong>
+        <span>Smartphones, audio, wearables and chargers from local tech vendors.</span>
+        <a href="shop.html?category=phones-gadgets">Shop phones &amp; gadgets →</a>
+      </div>
+      <div class="about-point">
+        <strong>Vehicle Parts</strong>
+        <span>Oils, tyres, batteries and genuine parts, with fitting when you need it.</span>
+        <a href="shop.html?category=vehicle-parts">Shop vehicle parts →</a>
+      </div>
+      <div class="about-point">
+        <strong>Laptops &amp; Accessories</strong>
+        <span>Business, gaming and student laptops, plus keyboards, mice and storage.</span>
+        <a href="shop.html?category=laptops-accessories">Shop laptops &amp; accessories →</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <a href="index.html" class="logo">
+          <span class="logo-mark">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
+          </span>
+          <span class="logo-text">Digital<em>Auto</em>Shop</span>
+        </a>
+        <p>Zimbabwe's one-stop marketplace for phones, gadgets, vehicle parts and laptops — powered by local vendors.</p>
+      </div>
+      <div class="footer-col">
+        <h4>Shop</h4>
+        <a href="shop.html?category=phones-gadgets">Phones &amp; Gadgets</a>
+        <a href="shop.html?category=vehicle-parts">Vehicle Parts</a>
+        <a href="shop.html?category=laptops-accessories">Laptops &amp; Accessories</a>
+        <a href="shop.html">All Products</a>
+      </div>
+      <div class="footer-col">
+        <h4>Company</h4>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="track.html">Track Order</a>
+        <a href="vendor.html">Become a Seller</a>
+      </div>
+      <div class="footer-col">
+        <h4>Contact</h4>
+        <a href="https://www.google.com/maps/search/?api=1&query=24+Midlothian+Avenue,+Eastlea,+Harare" target="_blank" rel="noopener">24 Midlothian Avenue, Eastlea, Harare</a>
+        <a href="tel:+263773909307">+263 77 390 9307</a>
+        <a href="mailto:info@globalspaceweb.co.zw">info@globalspaceweb.co.zw</a>
+        <a href="contact.html">Mon–Sat, 8am–6pm</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <span>© 2026 Digital Auto Shop. All rights reserved.</span>
+        <span>Developed &amp; Powered By <a href="https://globalspaceweb.co.zw" target="_blank" rel="noopener">Global Space Web</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="cart.js"></script>
+  <script src="page.js"></script>
+</body>
+</html>

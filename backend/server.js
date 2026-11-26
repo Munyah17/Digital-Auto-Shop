@@ -8,6 +8,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+const mail = require("./mail");
 
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, "data");
@@ -18,12 +19,15 @@ const STORE_FILE = path.join(DATA_DIR, "store.json");
 const COMMISSION_PCT = 8;          // platform commission on every sale
 const PAYOUT_HOLD_DAYS = 3;        // seller payout released N days after delivery confirmation
 
-/* Paynow Zimbabwe — override via env vars in production */
+/* Paynow Zimbabwe — credentials come from backend/.env in production */
 const PAYNOW = {
-  id: process.env.PAYNOW_ID || "24720",
-  key: process.env.PAYNOW_KEY || "d40d9ce1-9737-4b2d-bc2b-bef0770c8744",
+  id: process.env.PAYNOW_ID || "",
+  key: process.env.PAYNOW_KEY || "",
 };
 const PAYNOW_INITIATE_URL = "https://www.paynow.co.zw/interface/initiatetransaction";
+function paynowConfigured() {
+  return !!(PAYNOW.id && PAYNOW.key);
+}
 const POP_DIR = path.join(DATA_DIR, "pops");
 const BANK_DETAILS = {
   accountName: "Solabliss Zimbabwe Pvt Ltd",
@@ -31,6 +35,13 @@ const BANK_DETAILS = {
   branch: "FBC Center Branch",
   account: "6870465460146",
   currency: "USD",
+};
+
+const AUTH = {
+  secret: process.env.AUTH_SECRET || "digital-auto-shop-dev-secret",
+  adminUser: process.env.ADMIN_USER || "admin",
+  adminPass: process.env.ADMIN_PASS || "admin123",
+  vendorPass: process.env.VENDOR_PASS || "vendor123",
 };
 
 let db = { vendors: [], products: [], orders: [], settings: { commissionPct: COMMISSION_PCT } };
@@ -46,6 +57,60 @@ function save() {
 }
 const uid = (p) => p + "_" + crypto.randomBytes(6).toString("hex");
 const now = () => new Date().toISOString();
+
+function hashPassword(password) {
+  const salt = crypto.randomBytes(16).toString("hex");
+  const hash = crypto.scryptSync(password, salt, 32).toString("hex");
+  return salt + ":" + hash;
+}
+function checkPassword(password, stored) {
+  const [salt, hash] = String(stored || "").split(":");
+  if (!salt || !hash || hash.length !== 64) return false;
+  const check = crypto.scryptSync(String(password), salt, 32).toString("hex");
+  return crypto.timingSafeEqual(Buffer.from(check, "hex"), Buffer.from(hash, "hex"));
+}
+function publicCustomer(c) {
+  return { id: c.id, name: c.name, email: c.email, phone: c.phone, createdAt: c.createdAt };
+}
+function publicOrder(o) {
+  const copy = { ...o };
+  delete copy.popPath;
+  return copy;
+}
+function requestBase(req) {
+  const env = process.env.PUBLIC_BASE_URL;
+  if (env) return env.replace(/\/+$/, "");
+  const origin = req.headers.origin;
+  if (origin && /^https?:\/\//i.test(origin)) return origin.replace(/\/+$/, "");
+  const host = req.headers["x-forwarded-host"] || req.headers.host;
+  return host ? `http://${host}` : "http://localhost:8080";
+}
+function trackingOrder(o) {
+  return {
+    id: o.id,
+    status: o.status,
+    fulfillment: o.fulfillment,
+    total: o.total,
+    createdAt: o.createdAt,
+    pickupCode: o.pickupCode || null,
+    vendorContacts: o.vendorContacts || [],
+    lines: (o.lines || []).map((l) => ({ name: l.name, qty: l.qty, unitPrice: l.unitPrice, lineTotal: l.lineTotal })),
+    events: (o.events || []).map((e) => ({ at: e.at, status: e.status })),
+  };
+}
+function vendorOrderView(o, vendorId) {
+  const copy = publicOrder(o);
+  copy.lines = (o.lines || []).filter((l) => l.vendorId === vendorId);
+  copy.vendorSubtotal = Math.round(copy.lines.reduce((s, l) => s + l.lineTotal, 0) * 100) / 100;
+  delete copy.email;
+  delete copy.transactionRef;
+  delete copy.customerId;
+  delete copy.guest;
+  return copy;
+}
+function adminOrderView(o) {
+  return { ...publicOrder(o), hasPop: !!o.popPath, popName: o.popPath ? path.basename(o.popPath) : null };
+}
 
 /* ---------------- Seed ---------------- */
 
@@ -116,15 +181,80 @@ function send(res, code, data) {
   res.writeHead(code, { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" });
   res.end(JSON.stringify(data));
 }
+function sendFile(res, filePath, name) {
+  fs.readFile(filePath, (err, data) => {
+    if (err) return send(res, 404, { error: "File not found" });
+    const ext = path.extname(filePath).toLowerCase();
+    const types = {
+      ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp",
+      ".gif": "image/gif", ".pdf": "application/pdf", ".doc": "application/msword",
+      ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    };
+    res.writeHead(200, {
+      "Content-Type": types[ext] || "application/octet-stream",
+      "Content-Disposition": `inline; filename="${name}"`,
+      "Access-Control-Allow-Origin": "*",
+    });
+    res.end(data);
+  });
+}
 function body(req) {
   return new Promise((resolve) => {
+    const MAX_BODY = 15 * 1024 * 1024; // PoP uploads are base64 data URLs
     let raw = "";
-    req.on("data", (c) => (raw += c));
-    req.on("end", () => { try { resolve(JSON.parse(raw || "{}")); } catch { resolve({}); } });
+    let settled = false;
+    const finish = (value) => { if (!settled) { settled = true; resolve(value); } };
+    req.on("data", (c) => {
+      if (settled) return;
+      raw += c;
+      if (raw.length > MAX_BODY) {
+        req.destroy();
+        finish({ __payloadTooLarge: true });
+      }
+    });
+    req.on("end", () => {
+      if (settled) return;
+      try { finish(JSON.parse(raw || "{}")); } catch { finish({}); }
+    });
   });
 }
 function route(pattern, method, handler) {
   return { pattern, method, handler };
+}
+
+function signToken(payload) {
+  const body = Buffer.from(JSON.stringify({ ...payload, exp: Date.now() + 1000 * 60 * 60 * 12 })).toString("base64url");
+  const sig = crypto.createHmac("sha256", AUTH.secret).update(body).digest("base64url");
+  return `${body}.${sig}`;
+}
+function verifyToken(token) {
+  try {
+    const [body, sig] = String(token || "").split(".");
+    if (!body || !sig) return null;
+    const expect = crypto.createHmac("sha256", AUTH.secret).update(body).digest("base64url");
+    const sigBuf = Buffer.from(sig);
+    const expectBuf = Buffer.from(expect);
+    if (sigBuf.length !== expectBuf.length || !crypto.timingSafeEqual(sigBuf, expectBuf)) return null;
+    const p = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
+    if (!p.exp || p.exp < Date.now()) return null;
+    return p;
+  } catch { return null; }
+}
+function tokenFrom(req) {
+  const h = req.headers.authorization || "";
+  const m = h.match(/^Bearer\s+(.+)$/i);
+  return m ? verifyToken(m[1]) : null;
+}
+function requireAuth(req, res, role) {
+  const p = tokenFrom(req);
+  if (!p || p.role !== role) { send(res, 401, { error: "Authentication required" }); return null; }
+  return p;
+}
+function requireVendor(req, res, vendorId) {
+  const p = requireAuth(req, res, "vendor");
+  if (!p) return null;
+  if (vendorId && p.vendorId !== vendorId) { send(res, 403, { error: "Forbidden" }); return null; }
+  return p;
 }
 
 /* ---------------- Delivery fee engine ----------------
@@ -158,26 +288,46 @@ function deliveryFee({ zone = "harare-suburbs", km = 5, bulky = false, fragile =
  * Pickup+cash orders: pending → pickup_confirmed (requires platform code) → completed
  */
 
-function createOrder(b, res) {
-  const { items = [], fulfillment = "delivery", deliveryAddress, deliveryZone, distanceKm, paymentMethod = "ecocash", buyerPhone, buyerName, transactionRef, email, pop } = b;
+async function createOrder(req, res) {
+  const b = await body(req);
+  if (b.__payloadTooLarge) return send(res, 413, { error: "Request too large" });
+  let { items = [], fulfillment = "delivery", deliveryAddress, deliveryZone, distanceKm, paymentMethod = "ecocash", buyerPhone, buyerName, transactionRef, email, pop } = b;
+  if (!Array.isArray(items)) items = [];
+  if (!["delivery", "pickup"].includes(fulfillment)) return send(res, 400, { error: "Invalid fulfilment method" });
+  if (!["ecocash", "onemoney", "card", "bank_transfer", "cash_pickup"].includes(paymentMethod)) return send(res, 400, { error: "Invalid payment method" });
+  const actor = tokenFrom(req);
+  let customerId = null;
+  if (actor && actor.role === "customer") {
+    const customer = (db.customers || []).find((c) => c.id === actor.sub);
+    if (customer) {
+      customerId = customer.id;
+      buyerName = buyerName || customer.name;
+      buyerPhone = buyerPhone || customer.phone;
+      email = email || customer.email;
+    }
+  }
   if (!items.length) return send(res, 400, { error: "Cart is empty" });
   if (!buyerPhone) return send(res, 400, { error: "buyerPhone required" });
   if (paymentMethod === "bank_transfer") {
     if (!transactionRef) return send(res, 400, { error: "Transaction reference is required for bank transfer" });
     if (!email) return send(res, 400, { error: "Email is required for bank transfer" });
     if (!pop) return send(res, 400, { error: "Proof of payment upload is required for bank transfer" });
+    if (String(pop).length > 12 * 1024 * 1024) return send(res, 400, { error: "Proof of payment is too large" });
   }
 
   // validate stock & price server-side
   const lines = [];
   let subtotal = 0;
   for (const it of items) {
-    const p = db.products.find((x) => x.id === it.productId || x.name === it.productId);
-    if (!p) return send(res, 404, { error: `Product ${it.productId} not found` });
-    if (p.stock < it.qty) return send(res, 409, { error: `Insufficient stock for ${p.name}` });
-    const lineTotal = p.price * it.qty;
+    const qty = Math.floor(Number(it && it.qty));
+    const productRef = it && (it.productId || it.name);
+    if (!productRef || !Number.isFinite(qty) || qty < 1) return send(res, 400, { error: "Each item needs a product and quantity" });
+    const p = db.products.find((x) => x.id === productRef || x.name === productRef);
+    if (!p || p.active === false) return send(res, 404, { error: `Product ${productRef} not found` });
+    if (p.stock < qty) return send(res, 409, { error: `Insufficient stock for ${p.name}` });
+    const lineTotal = p.price * qty;
     subtotal += lineTotal;
-    lines.push({ productId: p.id, vendorId: p.vendorId, name: p.name, qty: it.qty, unitPrice: p.price, lineTotal });
+    lines.push({ productId: p.id, vendorId: p.vendorId, name: p.name, qty, unitPrice: p.price, lineTotal });
   }
 
   let fee = 0, feeInfo = null;
@@ -195,6 +345,9 @@ function createOrder(b, res) {
     id: uid("ord"),
     buyer: { name: buyerName || "Customer", phone: buyerPhone },
     fulfillment,
+    deliveryAddress: fulfillment === "delivery" ? String(deliveryAddress || "") : null,
+    deliveryZone: fulfillment === "delivery" ? deliveryZone || null : null,
+    distanceKm: fulfillment === "delivery" ? Number(distanceKm) || null : null,
     lines,
     subtotal,
     deliveryFee: fee,
@@ -203,6 +356,8 @@ function createOrder(b, res) {
     paymentMethod,
     transactionRef: transactionRef || null,
     email: email || null,
+    customerId,
+    guest: !customerId,
     status: paymentMethod === "cash_pickup" && fulfillment === "pickup" ? "awaiting_pickup_payment" : "pending_payment",
     pickupCode: fulfillment === "pickup" ? String(Math.floor(100000 + Math.random() * 900000)) : null,
     vendorContacts: [],   // filled below for pickup orders
@@ -219,10 +374,9 @@ function createOrder(b, res) {
     }).filter(Boolean);
   }
 
-  // decrement stock
-  for (const it of items) {
-    const p = db.products.find((x) => x.id === it.productId);
-    p.stock -= it.qty;
+  for (const line of lines) {
+    const p = db.products.find((x) => x.id === line.productId);
+    if (p) p.stock -= line.qty;
   }
 
   // save proof-of-payment file for bank transfers
@@ -238,7 +392,8 @@ function createOrder(b, res) {
 
   db.orders.push(order);
   save();
-  send(res, 201, order);
+  send(res, 201, trackingOrder(order));
+  queueOrderMail(order, "New order");
 }
 
 function transitionOrder(b, res, id) {
@@ -263,17 +418,110 @@ function transitionOrder(b, res, id) {
   if (to === "pickup_confirmed" && actor !== "admin" && b.pickupCode !== order.pickupCode) {
     return send(res, 403, { error: "Valid pickup code required (issued to buyer at checkout)" });
   }
+  if (to === "cancelled") {
+    for (const line of order.lines || []) {
+      const p = db.products.find((x) => x.id === line.productId);
+      if (p) p.stock += line.qty;
+    }
+  }
   order.status = to;
   order.events.push({ at: now(), status: to, actor: actor || "system" });
   if (to === "payout_released") order.payoutReleasedAt = now();
   save();
-  send(res, 200, order);
+  send(res, 200, publicOrder(order));
+  queueOrderMail(order, statusLabel(to));
 }
 
 /* ---------------- Routes ---------------- */
 
 const routes = [
   route(/^\/api\/health$/, "GET", (req, res) => send(res, 200, { ok: true, vendors: db.vendors.length, products: db.products.length, orders: db.orders.length })),
+
+  route(/^\/api\/auth\/login$/, "POST", async (req, res) => {
+    const b = await body(req);
+    if (b.role === "admin") {
+      if (b.username === AUTH.adminUser && b.password === AUTH.adminPass) {
+        return send(res, 200, { ok: true, role: "admin", user: b.username, token: signToken({ role: "admin", sub: b.username }) });
+      }
+      return send(res, 401, { error: "Invalid admin credentials" });
+    }
+    if (b.role === "vendor") {
+      const v = db.vendors.find((x) => x.id === b.vendorId);
+      if (!v) return send(res, 404, { error: "Vendor not found" });
+      if (b.password !== AUTH.vendorPass) return send(res, 401, { error: "Invalid vendor password" });
+      return send(res, 200, { ok: true, role: "vendor", vendorId: v.id, vendor: v, token: signToken({ role: "vendor", vendorId: v.id }) });
+    }
+    if (b.role === "customer") {
+      const email = String(b.email || "").trim().toLowerCase();
+      const customer = (db.customers || []).find((c) => c.email === email);
+      if (!customer || !checkPassword(b.password || "", customer.passwordHash)) {
+        return send(res, 401, { error: "Invalid email or password" });
+      }
+      return send(res, 200, {
+        ok: true, role: "customer", token: signToken({ role: "customer", sub: customer.id }),
+        ...publicCustomer(customer),
+      });
+    }
+    send(res, 400, { error: "role must be admin, vendor, or customer" });
+  }),
+
+  route(/^\/api\/auth\/register$/, "POST", async (req, res) => {
+    const b = await body(req);
+    const name = String(b.name || "").trim();
+    const email = String(b.email || "").trim().toLowerCase();
+    const phone = String(b.phone || "").trim();
+    const password = String(b.password || "");
+    if (!name || !email || !phone || !password) return send(res, 400, { error: "Name, email, phone and password are required" });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, 400, { error: "Enter a valid email address" });
+    if (password.length < 6) return send(res, 400, { error: "Password must be at least 6 characters" });
+    if (!Array.isArray(db.customers)) db.customers = [];
+    if (db.customers.some((c) => c.email === email)) return send(res, 409, { error: "An account with that email already exists" });
+    const customer = { id: uid("cus"), name, email, phone, passwordHash: hashPassword(password), createdAt: now() };
+    db.customers.push(customer);
+    save();
+    send(res, 201, {
+      ok: true, role: "customer", token: signToken({ role: "customer", sub: customer.id }),
+      ...publicCustomer(customer),
+    });
+  }),
+
+  route(/^\/api\/account\/me$/, "GET", (req, res) => {
+    const actor = requireAuth(req, res, "customer");
+    if (!actor) return;
+    const customer = (db.customers || []).find((c) => c.id === actor.sub);
+    if (!customer) return send(res, 401, { error: "Account not found" });
+    send(res, 200, publicCustomer(customer));
+  }),
+
+  route(/^\/api\/account\/orders$/, "GET", (req, res) => {
+    const actor = requireAuth(req, res, "customer");
+    if (!actor) return;
+    const customer = (db.customers || []).find((c) => c.id === actor.sub);
+    if (!customer) return send(res, 401, { error: "Account not found" });
+    const email = customer.email.toLowerCase();
+    const phone = String(customer.phone || "").replace(/\s+/g, "");
+    const list = (db.orders || []).filter((o) => {
+      if (o.customerId === customer.id) return true;
+      if (o.email && String(o.email).toLowerCase() === email) return true;
+      const orderPhone = String(o.buyer && o.buyer.phone || "").replace(/\s+/g, "");
+      return phone && orderPhone && orderPhone === phone;
+    }).map(publicOrder);
+    send(res, 200, list);
+  }),
+
+  route(/^\/api\/admin\/customers$/, "GET", (req, res) => {
+    if (!requireAuth(req, res, "admin")) return;
+    send(res, 200, (db.customers || []).map(publicCustomer));
+  }),
+  route(/^\/api\/admin\/orders\/([^/]+)\/pop$/, "GET", (req, res, m) => {
+    if (!requireAuth(req, res, "admin")) return;
+    const order = (db.orders || []).find((o) => o.id === m[1]);
+    if (!order || !order.popPath) return send(res, 404, { error: "No proof of payment for this order" });
+    const root = path.resolve(POP_DIR);
+    const file = path.resolve(order.popPath);
+    if (!file.startsWith(root + path.sep)) return send(res, 403, { error: "Forbidden" });
+    sendFile(res, file, path.basename(file));
+  }),
 
   // Vendors
   route(/^\/api\/vendors$/, "GET", (req, res) => send(res, 200, db.vendors)),
@@ -298,9 +546,11 @@ const routes = [
     send(res, 200, list);
   }),
   route(/^\/api\/vendors\/([^/]+)\/products$/, "GET", (req, res, m) => {
+    if (!requireVendor(req, res, m[1])) return;
     send(res, 200, db.products.filter((p) => p.vendorId === m[1]));
   }),
   route(/^\/api\/vendors\/([^/]+)\/products$/, "POST", async (req, res, m) => {
+    if (!requireVendor(req, res, m[1])) return;
     const b = await body(req);
     if (!b.name || b.price == null) return send(res, 400, { error: "name and price required" });
     const p = {
@@ -313,16 +563,49 @@ const routes = [
   route(/^\/api\/products\/([^/]+)$/, "PATCH", async (req, res, m) => {
     const p = db.products.find((x) => x.id === m[1]);
     if (!p) return send(res, 404, { error: "Not found" });
+    const a = requireAuth(req, res, "vendor");
+    if (!a) return;
+    if (a.vendorId !== p.vendorId) return send(res, 403, { error: "Forbidden" });
     const b = await body(req);
     Object.assign(p, b); save();
     send(res, 200, p);
   }),
+  route(/^\/api\/vendors\/([^/]+)\/orders$/, "GET", (req, res, m) => {
+    if (!requireVendor(req, res, m[1])) return;
+    send(res, 200, (db.orders || [])
+      .filter((o) => (o.lines || []).some((l) => l.vendorId === m[1]))
+      .map((o) => vendorOrderView(o, m[1])));
+  }),
 
   // Orders
   route(/^\/api\/orders$/, "POST", createOrder),
-  route(/^\/api\/orders$/, "GET", (req, res) => send(res, 200, db.orders)),
+  route(/^\/api\/orders$/, "GET", (req, res) => {
+    if (!requireAuth(req, res, "admin")) return;
+    send(res, 200, (db.orders || []).map(adminOrderView));
+  }),
+  route(/^\/api\/orders\/lookup$/, "GET", (req, res) => {
+    const url = new URL(req.url, "http://x");
+    const ref = String(url.searchParams.get("ref") || "").trim();
+    if (ref.length < 6) return send(res, 400, { error: "Enter your full order ID" });
+    const all = db.orders || [];
+    const order = all.find((o) => o.id === ref) || all.find((o) => o.id.endsWith(ref));
+    if (!order) return send(res, 404, { error: "Order not found — check the ID." });
+    send(res, 200, trackingOrder(order));
+  }),
   route(/^\/api\/orders\/([^/]+)\/transition$/, "POST", async (req, res, m) => {
-    transitionOrder(await body(req), res, m[1]);
+    const b = await body(req);
+    const actor = b.actor || "buyer";
+    if (actor === "admin") {
+      if (!requireAuth(req, res, "admin")) return;
+    } else if (actor === "vendor") {
+      const a = requireAuth(req, res, "vendor");
+      if (!a) return;
+      const o = db.orders.find((x) => x.id === m[1]);
+      if (!o || !o.lines.some((l) => l.vendorId === a.vendorId)) return send(res, 403, { error: "Forbidden" });
+    } else {
+      return send(res, 403, { error: "Authentication required" });
+    }
+    transitionOrder(b, res, m[1]);
   }),
 
   // Delivery fee quote
@@ -338,6 +621,7 @@ const routes = [
 
   // Vendor payouts (commission already deducted at order level)
   route(/^\/api\/vendors\/([^/]+)\/payouts$/, "GET", (req, res, m) => {
+    if (!requireVendor(req, res, m[1])) return;
     const vid = m[1];
     const vendorOrders = db.orders.filter((o) =>
       o.status === "payout_released" && o.lines.some((l) => l.vendorId === vid)
@@ -361,16 +645,22 @@ const routes = [
 
   // Paynow — initiate hosted checkout, returns redirect URL
   route(/^\/api\/paynow\/initiate$/, "POST", async (req, res) => {
+    if (!paynowConfigured()) return send(res, 503, { error: "Paynow is not configured on the server" });
     const b = await body(req);
     const { amount, reference, description = "Digital Auto Shop order" } = b;
     if (!amount || !reference) return send(res, 400, { error: "amount and reference required" });
+    const order = db.orders.find((o) => o.id === reference);
+    if (!order) return send(res, 404, { error: "Order not found" });
+    if (order.status !== "pending_payment") return send(res, 409, { error: "Order is not awaiting payment" });
+    if (Math.abs(Number(amount) - Number(order.total)) > 0.01) return send(res, 400, { error: "Amount does not match the order total" });
+    const base = requestBase(req);
     const params = {
       id: PAYNOW.id,
       reference: String(reference),
       amount: Number(amount).toFixed(2),
       additionalinfo: description,
-      returnurl: "http://localhost:8080/checkout.html?paid=1",
-      resulturl: "http://localhost:3000/api/paynow/result",
+      returnurl: `${base}/checkout.html?paid=1`,
+      resulturl: `${base}/api/paynow/result`,
       status: "Message",
     };
     const hash = crypto.createHash("sha512").update(Object.values(params).join("")).digest("hex");
@@ -400,12 +690,7 @@ const routes = [
         const p = Object.fromEntries(new URLSearchParams(poll));
         if (p.status === "Paid") {
           const order = db.orders.find((o) => o.id === b.reference);
-          if (order && order.status === "pending_payment") {
-            order.status = "paid_escrow";
-            order.paynowRef = b.paynowreference || null;
-            order.events.push({ at: now(), status: "paid_escrow", actor: "paynow" });
-            save();
-          }
+          markPaid(order, { paynowRef: b.paynowreference || null });
         }
       }
     } catch (e) { /* still ack Paynow */ }
@@ -422,11 +707,7 @@ const routes = [
             const p = Object.fromEntries(new URLSearchParams(poll));
             if (p.status === "Paid") {
               const order = db.orders.find((o) => o.id === b.reference);
-              if (order && order.status === "pending_payment") {
-                order.status = "paid_escrow";
-                order.events.push({ at: now(), status: "paid_escrow", actor: "paynow" });
-                save();
-              }
+              markPaid(order);
             }
           }
         } catch (e) {}
@@ -440,6 +721,9 @@ const routes = [
   route(/^\/api\/pos\/sale$/, "POST", async (req, res) => {
     const b = await body(req);
     const { vendorId, items = [], paymentMethod = "cash", buyerPhone, buyerName } = b;
+    const a = requireAuth(req, res, "vendor");
+    if (!a) return;
+    if (a.vendorId !== vendorId) return send(res, 403, { error: "Forbidden" });
     const vendor = db.vendors.find((v) => v.id === vendorId);
     if (!vendor) return send(res, 404, { error: "Vendor not found" });
     if (!items.length) return send(res, 400, { error: "Cart is empty" });
@@ -480,22 +764,192 @@ const routes = [
   }),
 
   // Admin: slides (mirrors localStorage for production)
-  route(/^\/api\/admin\/slides$/, "GET", (req, res) => send(res, 200, db.slides || [])),
+  route(/^\/api\/admin\/slides$/, "GET", (req, res) => {
+    if (!requireAuth(req, res, "admin")) return;
+    send(res, 200, db.slides || []);
+  }),
   route(/^\/api\/admin\/slides$/, "POST", async (req, res) => {
+    if (!requireAuth(req, res, "admin")) return;
     const b = await body(req);
     db.slides = (b.slides || []).slice(0, 10);
     save();
     send(res, 200, { ok: true, count: db.slides.length });
   }),
+
+  route(/^\/api\/contact$/, "POST", async (req, res) => {
+    const b = await body(req);
+    const name = String(b.name || "").trim();
+    const email = String(b.email || "").trim();
+    const phone = String(b.phone || "").trim();
+    const message = String(b.message || "").trim();
+    if (!name || !message) return send(res, 400, { error: "Name and message are required" });
+    if (name.length > 120 || phone.length > 40 || message.length > 4000) {
+      return send(res, 400, { error: "That message is too long" });
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return send(res, 400, { error: "Enter a valid email address" });
+    }
+    if (!Array.isArray(db.messages)) db.messages = [];
+    const msg = { id: uid("msg"), name, email, phone, message, createdAt: now() };
+    db.messages.push(msg);
+    save();
+    let mailSent = false;
+    try {
+      const shopMail = await mail.send({
+        to: mail.shopAddress(),
+        replyTo: email,
+        subject: "New website message from " + name,
+        text: [
+          "A message arrived from the Digital Auto Shop website.",
+          "",
+          "Name: " + name,
+          "Email: " + (email || "—"),
+          "Phone: " + (phone || "—"),
+          "",
+          message,
+        ].join("\n"),
+      });
+      mailSent = !!(shopMail && shopMail.ok);
+      if (email) {
+        mail.send({
+          to: email,
+          subject: "We received your message — Digital Auto Shop",
+          text: [
+            "Hello " + name + ",",
+            "",
+            "Thanks for contacting Digital Auto Shop. We have your message and will reply shortly.",
+            "",
+            "24 Midlothian Avenue, Eastlea, Harare",
+            "+263 77 390 9307",
+            "info@globalspaceweb.co.zw",
+          ].join("\n"),
+        }).catch((e) => console.error("contact reply:", mail.redact(e.message)));
+      }
+    } catch (e) {
+      console.error("contact mail:", mail.redact(e.message));
+    }
+    send(res, 201, { ok: true, id: msg.id, mailSent });
+  }),
+
+  route(/^\/api\/admin\/notifications$/, "GET", (req, res) => {
+    if (!requireAuth(req, res, "admin")) return;
+    const inbox = (db.inbox || []).map(({ uid, from, subject, date, text, receivedAt }) => ({ uid, from, subject, date, text, receivedAt }));
+    const messages = (db.messages || []).map(({ id, name, email, phone, message, createdAt }) => ({ id, name, email, phone, message, createdAt }));
+    send(res, 200, { configured: mail.configured(), inbox, messages });
+  }),
 ];
 
+const STATUS_LABELS = {
+  pending_payment: "Waiting for payment",
+  awaiting_pickup_payment: "Waiting for pickup payment",
+  paid_escrow: "Payment received",
+  dispatched: "Dispatched",
+  delivered: "Delivered",
+  pickup_confirmed: "Pickup confirmed",
+  completed: "Completed",
+  payout_released: "Payout released",
+  cancelled: "Cancelled",
+};
+
+function statusLabel(status) {
+  return STATUS_LABELS[status] || status;
+}
+
+function orderMailText(order, headline, forCustomer) {
+  const lines = (order.lines || []).map((l) => l.qty + " × " + l.name + " — $" + l.lineTotal);
+  const rows = [
+    headline,
+    "",
+    "Order: " + order.id,
+    "Status: " + statusLabel(order.status),
+    "Customer: " + (order.buyer && order.buyer.name || "Customer"),
+    "Phone: " + (order.buyer && order.buyer.phone || "—"),
+    "Email: " + (order.email || "—"),
+    "Fulfilment: " + order.fulfillment,
+    "Payment: " + order.paymentMethod,
+  ];
+  if (order.deliveryAddress) rows.push("Address: " + order.deliveryAddress);
+  if (!forCustomer && order.transactionRef) rows.push("Transaction reference: " + order.transactionRef);
+  if (order.pickupCode) rows.push("Pickup code: " + order.pickupCode);
+  rows.push("", ...lines, "", "Total: $" + order.total, "", "Digital Auto Shop", "24 Midlothian Avenue, Eastlea, Harare", "+263 77 390 9307");
+  return rows.join("\n");
+}
+
+function queueOrderMail(order, headline) {
+  if (!order || order.pos) return;
+  const shop = mail.shopAddress();
+  if (shop) {
+    mail.send({
+      to: shop,
+      replyTo: order.email,
+      subject: headline + " " + order.id,
+      text: orderMailText(order, headline, false),
+    }).catch((e) => console.error("order mail:", mail.redact(e.message)));
+  }
+  if (order.email && mail.isEmail(order.email)) {
+    mail.send({
+      to: order.email,
+      subject: headline + " — Digital Auto Shop",
+      text: orderMailText(order, headline, true),
+    }).catch((e) => console.error("customer mail:", mail.redact(e.message)));
+  }
+}
+
+function markPaid(order, extra) {
+  if (!order || order.status !== "pending_payment") return;
+  order.status = "paid_escrow";
+  if (extra) Object.assign(order, extra);
+  order.events.push({ at: now(), status: "paid_escrow", actor: "paynow" });
+  save();
+  queueOrderMail(order, "Payment received");
+}
+
+let lastInboxError = "";
+async function syncMailbox() {
+  if (!mail.configured()) return;
+  try {
+    if (!Array.isArray(db.mailSeen)) {
+      db.mailSeen = await mail.pullInbox(new Set(), { listOnly: true });
+      save();
+      lastInboxError = "";
+      console.log("Mailbox connected.", db.mailSeen.length, "existing message(s) left in the inbox.");
+      return;
+    }
+    const known = new Set(db.mailSeen);
+    const found = await mail.pullInbox(known);
+    lastInboxError = "";
+    if (!found.length) return;
+    db.mailSeen = db.mailSeen.concat(found.map((m) => m.uid));
+    db.inbox = (db.inbox || []).concat(found.map((m) => ({ id: uid("in"), ...m })));
+    if (db.inbox.length > 200) db.inbox = db.inbox.slice(-200);
+    save();
+    console.log("Mailbox received", found.length, "message(s)");
+  } catch (e) {
+    const msg = mail.redact(e.message);
+    if (msg !== lastInboxError) {
+      console.error("Mailbox receive failed:", msg);
+      lastInboxError = msg;
+    }
+  }
+}
+
 load();
+if (!Array.isArray(db.messages)) db.messages = [];
+if (!Array.isArray(db.inbox)) db.inbox = [];
+if (!Array.isArray(db.customers)) db.customers = [];
 seed();
 
 http.createServer(async (req, res) => {
+  const pathname = new URL(req.url, "http://x").pathname;
   for (const r of routes) {
-    const m = req.url.match(r.pattern);
+    const m = pathname.match(r.pattern);
     if (m && req.method === r.method) return r.handler(req, res, m);
   }
   send(res, 404, { error: "Not found" });
-}).listen(PORT, () => console.log(`Vendor API on http://localhost:${PORT}`));
+}).listen(PORT, () => {
+  console.log(`Vendor API on http://localhost:${PORT}`);
+  if (mail.configured()) console.log("Mail notifications enabled for", mail.shopAddress());
+  else console.error("Mail is not configured — add backend/.env");
+  setTimeout(syncMailbox, 4000);
+  setInterval(syncMailbox, 3 * 60 * 1000);
+});

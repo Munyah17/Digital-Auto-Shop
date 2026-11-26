@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Create account — Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
+</head>
+<body>
+  <header class="header" style="position:static">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="login.html" class="nav-link">Sign in</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="login.html">Sign in</a>
+    </div>
+  </header>
+
+  <main class="auth-card">
+    <h1>Create an account</h1>
+    <p class="lede">Save your orders and transactions. You can still check out as a guest without an account.</p>
+    <form id="registerForm">
+      <div class="co-field"><label for="name">Full name</label><input id="name" autocomplete="name" required /></div>
+      <div class="co-field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required /></div>
+      <div class="co-field"><label for="phone">Phone</label><input id="phone" type="tel" autocomplete="tel" placeholder="+263 77 000 0000" required /></div>
+      <div class="co-field"><label for="password">Password</label><input id="password" type="password" autocomplete="new-password" minlength="6" required /></div>
+      <button class="btn btn-solid" type="submit" id="submitBtn" style="width:100%">Create account</button>
+      <p class="form-status" id="formStatus" role="status"></p>
+    </form>
+    <p class="switch">Already registered? <a href="login.html">Sign in</a></p>
+    <p class="switch">Selling on the shop? <a href="vendor.html">Open the vendor portal</a></p>
+    <p class="switch"><a href="shop.html">Continue as a guest</a></p>
+  </main>
+  <script src="page.js"></script>
+  <script src="session.js"></script>
+  <script src="register.js"></script>
+</body>
+</html>

@@ -40,8 +40,19 @@
     .login-card select, .login-card input { width: 100%; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; font-family: inherit; font-size: .9rem; margin-bottom: 12px; }
     .hidden { display: none !important; }
     .tabs { display: flex; gap: 6px; margin-bottom: 20px; border-bottom: 1px solid var(--line); }
-    .tab { padding: 10px 16px; font-size: .86rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .tab { padding: 10px 16px; font-size: .86rem; font-weight: 600; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
     .tab.active { color: var(--blue-700); border-color: var(--blue-600); }
+    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .pos-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 860px) {
+      .dash { padding: 16px 4% 48px; }
+      .dash-head h1 { font-size: 1.25rem; }
+      .inline-form, .pos-layout { grid-template-columns: 1fr; }
+      .panel { padding: 14px; }
+      .login-card { margin: 20px 16px; padding: 22px 16px; }
+      .tab { padding: 10px 12px; font-size: .8rem; }
+      table { min-width: 640px; }
+    }
 
     /* Dark theme (inline styles load after styles.css — must live here too) */
     html[data-theme="dark"] .stat-card, html[data-theme="dark"] .panel,
@@ -75,10 +86,21 @@
       </a>
       <nav class="nav">
         <a href="index.html" class="nav-link">← Storefront</a>
-        <a href="vendor.html" class="nav-link active">Seller Dashboard</a>
+        <a href="vendor.html" class="nav-link active">Vendor portal</a>
         <a href="track.html" class="nav-link">Track Order</a>
-        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode" style="margin-left:auto"></button>
       </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Storefront</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="vendor.html" class="active">Vendor portal</a>
+      <a href="account.html">Customer account</a>
+      <a href="track.html">Track Order</a>
     </div>
   </header>
 
@@ -87,13 +109,14 @@
     <h1>Seller Dashboard</h1>
     <p>Sign in with your vendor account to manage inventory, orders and payouts.</p>
     <select id="vendorSelect"><option value="">Loading vendors…</option></select>
-    <button class="btn btn-primary" id="loginBtn" style="width:100%">Continue</button>
+    <input id="vendorPass" type="password" placeholder="Portal password" autocomplete="current-password" />
+    <button class="btn btn-solid" id="loginBtn" style="width:100%">Continue</button>
     <p style="margin-top:14px;font-size:.78rem">New seller? <a href="#" id="registerToggle" style="color:var(--blue-600);font-weight:600">Register your shop →</a></p>
     <div id="registerForm" class="hidden">
       <input id="regName" placeholder="Shop name" />
       <input id="regPhone" placeholder="Phone (EcoCash/OneMoney)" />
       <input id="regLocation" placeholder="Location (e.g. CBD, Harare)" />
-      <button class="btn btn-primary" id="regBtn" style="width:100%">Create account</button>
+      <button class="btn btn-solid" id="regBtn" style="width:100%">Create account</button>
     </div>
   </div>
 
@@ -112,7 +135,7 @@
     <div class="tabs">
       <button class="tab active" data-tab="inventory">Inventory</button>
       <button class="tab" data-tab="pos">Point of Sale</button>
-      <button class="tab" data-tab="orders">Orders</button>
+      <button class="tab" data-tab="orders">Sales</button>
       <button class="tab" data-tab="payouts">Payouts</button>
     </div>
 
@@ -125,13 +148,13 @@
           <select id="pCat">
             <option value="phones">Phones & Gadgets</option>
             <option value="parts">Vehicle Parts</option>
-            <option value="laptops">Laptops</option>
+            <option value="laptops">Laptops &amp; Accessories</option>
             <option value="general">General</option>
           </select>
         </div>
         <div class="field"><label>Price (USD)</label><input id="pPrice" type="number" min="0" step="0.01" required /></div>
         <div class="field"><label>Stock</label><input id="pStock" type="number" min="0" required /></div>
-        <button class="btn btn-primary btn-sm" type="submit">Add</button>
+        <button class="btn btn-solid btn-sm" type="submit">Add</button>
       </form>
       <div style="margin-top:18px;overflow-x:auto">
         <table>
@@ -144,7 +167,7 @@
     <!-- Point of Sale -->
     <div class="panel hidden" id="tab-pos">
       <h2>Point of Sale — walk-in sale</h2>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="pos-layout">
         <div>
           <div class="field" style="margin-bottom:12px">
             <label>Product</label>
@@ -168,7 +191,7 @@
             <label>Customer phone (optional)</label>
             <input id="posPhone" placeholder="+263 7XX XXX XXX" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-family:inherit"/>
           </div>
-          <button class="btn btn-primary" id="posAdd" style="width:100%">Add to sale</button>
+          <button class="btn btn-solid" id="posAdd" style="width:100%">Add to sale</button>
         </div>
         <div>
           <h3 style="font-size:.9rem;margin-bottom:10px">Current sale</h3>
@@ -176,7 +199,7 @@
           <div class="co-total" style="display:flex;justify-content:space-between;font-weight:700;padding-top:12px;margin-top:10px;border-top:2px solid var(--line)">
             <span>Total</span><span id="posTotal">$0</span>
           </div>
-          <button class="btn btn-primary" id="posComplete" style="width:100%;margin-top:14px" disabled>Complete sale</button>
+          <button class="btn btn-solid" id="posComplete" style="width:100%;margin-top:14px" disabled>Complete sale</button>
           <div id="posReceipt" class="hidden" style="margin-top:16px;padding:14px;background:var(--blue-50);border-radius:12px;font-size:.84rem"></div>
         </div>
       </div>
@@ -184,7 +207,7 @@
 
     <!-- Orders -->
     <div class="panel hidden" id="tab-orders">
-      <h2>Orders</h2>
+      <h2>Sales</h2>
       <div style="overflow-x:auto">
         <table>
           <thead><tr><th>Order</th><th>Buyer</th><th>Items</th><th>Total</th><th>Fulfilment</th><th>Status</th><th>Action</th></tr></thead>
@@ -203,6 +226,7 @@
 
   <div class="toast" id="toast"></div>
 
+  <script src="page.js"></script>
   <script src="vendor.js"></script>
 </body>
 </html>

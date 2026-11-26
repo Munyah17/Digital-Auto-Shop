@@ -6,6 +6,7 @@ Multi-vendor marketplace frontend + backend for phones, gadgets, vehicle parts a
 
 ```powershell
 # Terminal 1 — API (port 3000)
+copy backend\.env.example backend\.env   # fill in mail/Paynow/auth secrets
 node backend/server.js
 
 # Terminal 2 — Website + /api proxy (port 8080)
@@ -16,33 +17,52 @@ Open http://localhost:8080
 
 - Homepage: `index.html`
 - Full shop + filters: `shop.html` (supports `?category=best-picks|phones-gadgets|vehicle-parts|laptops-accessories`)
-- Super Admin (hero slides): `admin.html`
+- Customer account: `login.html`, `register.html`, `account.html`
+- Seller dashboard: `vendor.html` · Super Admin: `admin.html` · Order tracking: `track.html`
+- Info pages: `about.html`, `contact.html`
+
+## cPanel deployment
+
+Pushes to `main` can auto-deploy to cPanel through Git Version Control, `.cpanel.yml`, and the signed webhook in `deploy.php`.
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the one-time cPanel/GitHub setup.
 
 ## Structure
 
 ```
-index.html / shop.html / admin.html   pages
+index.html / shop.html / account.html / vendor.html / admin.html   pages
 styles.css                            design system (blue theme)
 products.js                           shared catalogue + SVG icon set
-app.js / shop.js / admin.js           page logic
+app.js / shop.js / checkout.js        storefront, cart and checkout logic
+login.js / register.js / account.js   customer auth + order history
+contact.js / page.js / session.js     contact form, shared chrome, customer session
 server.js                             static server + /api proxy → :3000
 backend/server.js                     multi-vendor REST API (no deps, JSON store)
-backend/data/store.json               runtime data (auto-created)
+backend/mail.js                       SMTP send + POP3 inbox sync
+backend/data/                         runtime data (auto-created, git-ignored)
 ```
 
 ## Backend API
 
 | Endpoint | Purpose |
 |---|---|
+| `POST /api/auth/register` `/api/auth/login` | Customer, vendor and admin sign-in |
+| `GET /api/account/me` `/api/account/orders` | Customer profile + order history |
 | `GET/POST /api/vendors` | Vendor accounts (name, phone, payout method, KYC) |
-| `GET/POST /api/vendors/:id/products` | Vendor inventory ("record book" CRUD) |
+| `GET/POST /api/vendors/:id/products` `/api/vendors/:id/orders` | Vendor inventory and sales |
 | `PATCH /api/products/:id` | Stock/price updates |
 | `GET /api/products?category=&q=&vendorId=` | Public catalogue |
 | `POST /api/orders` | Checkout — validates stock server-side |
-| `POST /api/orders/:id/transition` | Order state machine |
+| `GET /api/orders/lookup?ref=` | Public order tracking |
+| `GET /api/orders` | Admin order list (auth required) |
+| `POST /api/orders/:id/transition` | Order state machine (admin/vendor) |
+| `POST /api/pos/sale` | Vendor point-of-sale sale |
 | `GET /api/delivery-fee?zone=&km=&orderTotal=` | Dynamic delivery quote |
 | `GET /api/vendors/:id/payouts` | Net payable after commission |
-| `GET/POST /api/admin/slides` | Production slide storage |
+| `POST /api/contact` | Website contact form → shop mailbox |
+| `GET/POST /api/admin/slides` `/api/admin/customers` `/api/admin/notifications` | Admin portal data |
+| `GET /api/admin/orders/:id/pop` | Admin proof-of-payment file |
+| `POST /api/paynow/initiate` `GET/POST /api/paynow/result` | Paynow hosted checkout + callback |
 
 ## Order flow & commission protection
 
@@ -61,9 +81,8 @@ Pickup+cash: `awaiting_pickup_payment → pickup_confirmed → completed`
 
 ## Still to build (next iterations)
 
-- Vendor dashboard UI (inventory "record book" + point-of-sale)
-- Buyer auth + order tracking page
-- EcoCash/OneMoney/Paynow payment gateway integration
-- Admin panel for vendors, orders, disputes (backend endpoints exist)
 - Live InDrive/biker rate API integration
-- Push the slide manager to `/api/admin/slides` instead of localStorage
+- Password reset / email verification for customer accounts
+- Dispute and refund workflow with admin review
+- Vendor KYC review actions in the admin portal
+- Production secrets rotation and HTTPS enforcement

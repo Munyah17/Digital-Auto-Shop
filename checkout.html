@@ -23,6 +23,18 @@
         <a href="index.html" class="nav-link">← Continue shopping</a>
         <a href="track.html" class="nav-link">Track Order</a>
       </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="track.html">Track Order</a>
+      <a href="checkout.html" class="active">Checkout</a>
     </div>
   </header>
 
@@ -38,9 +50,11 @@
     <!-- Details -->
     <div class="checkout-card" id="detailsCard">
       <h2>Delivery &amp; payment</h2>
+      <p id="checkoutAccount" class="admin-note"></p>
       <form id="checkoutForm">
         <div class="co-field"><label>Full name</label><input id="buyerName" required placeholder="e.g. Tinashe Moyo" /></div>
         <div class="co-field"><label>Phone (EcoCash / OneMoney)</label><input id="buyerPhone" required placeholder="+263 7XX XXX XXX" /></div>
+        <div class="co-field"><label>Email <span style="color:var(--muted);font-weight:500;text-transform:none;letter-spacing:0">(for order updates)</span></label><input id="orderEmail" type="email" autocomplete="email" placeholder="you@email.com" /></div>
 
         <div class="co-field">
           <label>Fulfilment</label>
@@ -118,6 +132,8 @@
 
   <div class="toast" id="toast"></div>
   <script src="cart.js"></script>
+  <script src="session.js"></script>
+  <script src="page.js"></script>
   <script src="checkout.js"></script>
 </body>
 </html>

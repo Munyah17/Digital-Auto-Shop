@@ -1,4 +1,4 @@
-/* Checkout — builds order from localStorage cart, posts to /api/orders */
+/* Checkout — guest checkout is allowed. A signed-in customer gets the order on their account. */
 
 const fmt = (n) => "$" + Number(n).toLocaleString();
 const $ = (id) => document.getElementById(id);
@@ -110,6 +110,18 @@ $("cartItems").addEventListener("click", (e) => {
   syncCartBadge();
 });
 
+const signedIn = getCustomer();
+const accountNote = $("checkoutAccount");
+if (signedIn) {
+  accountNote.innerHTML = `Signed in as <strong></strong>. This order is saved to your account. <a href="account.html">View orders</a>`;
+  accountNote.querySelector("strong").textContent = signedIn.name || signedIn.email;
+  if (!$("buyerName").value) $("buyerName").value = signedIn.name || "";
+  if (!$("buyerPhone").value) $("buyerPhone").value = signedIn.phone || "";
+  if (!$("orderEmail").value) $("orderEmail").value = signedIn.email || "";
+} else {
+  accountNote.innerHTML = `Guest checkout — no account needed. <a href="register.html">Create an account</a> if you want these orders in one place.`;
+}
+
 /* Submit */
 $("checkoutForm").addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -122,9 +134,17 @@ $("checkoutForm").addEventListener("submit", async (e) => {
   const pay = document.querySelector('input[name="pay"]:checked').value;
 
   // bank transfer validation
+  const orderEmail = $("orderEmail").value.trim();
+  if (orderEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orderEmail)) {
+    err.textContent = "Enter a valid email address."; err.style.display = "block"; return;
+  }
+  const bankEmail = $("buyerEmail").value.trim();
+  if (bankEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bankEmail)) {
+    err.textContent = "Enter a valid email address."; err.style.display = "block"; return;
+  }
   if (pay === "bank_transfer") {
     if (!$("transactionRef").value.trim()) { err.textContent = "Transaction reference is required."; err.style.display = "block"; return; }
-    if (!$("buyerEmail").value.trim()) { err.textContent = "Email is required."; err.style.display = "block"; return; }
+    if (!bankEmail && !orderEmail) { err.textContent = "Email is required."; err.style.display = "block"; return; }
     if (!$("popFile").files.length) { err.textContent = "Please upload your Proof of Payment."; err.style.display = "block"; return; }
   }
 
@@ -149,9 +169,9 @@ $("checkoutForm").addEventListener("submit", async (e) => {
     paymentMethod: pay,
     items: cart.map((c) => ({ name: c.name, qty: c.qty })),
   };
+  body.email = bankEmail || orderEmail;
   if (pay === "bank_transfer") {
     body.transactionRef = $("transactionRef").value.trim();
-    body.email = $("buyerEmail").value.trim();
     body.pop = popData;
   }
   if (fulfil === "delivery") {
@@ -173,7 +193,7 @@ $("checkoutForm").addEventListener("submit", async (e) => {
 
     const res = await fetch("/api/orders", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...customerHeaders() },
       body: JSON.stringify(body),
     });
     const order = await res.json();
@@ -200,17 +220,20 @@ $("checkoutForm").addEventListener("submit", async (e) => {
     $("detailsCard").classList.add("hidden");
     $("cartItems").innerHTML = "";
     $("successCard").classList.remove("hidden");
+    const guestLine = getCustomer()
+      ? " It is saved in your account."
+      : " You checked out as a guest.";
     $("successMsg").textContent =
-      fulfil === "pickup"
+      (fulfil === "pickup"
         ? "Collect your items from the seller. Show your pickup code at handover."
-        : "Your order is confirmed. We'll call you to confirm delivery.";
+        : "Your order is confirmed. We'll call you to confirm delivery.") + guestLine;
     if (order.pickupCode) {
       $("pickupCodeBox").style.display = "block";
       $("pickupCodeBox").textContent = order.pickupCode;
     }
     if (pay === "bank_transfer") $("bankSuccessNote").classList.remove("hidden");
     $("orderIdLine").textContent = `Order ID: ${order.id} — Total: ${fmt(order.total)}`;
-    $("trackLink").href = `track.html`;
+    $("trackLink").href = `track.html?order=${encodeURIComponent(order.id)}`;
     sessionStorage.setItem("lastOrderId", order.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (ex) {
@@ -221,6 +244,45 @@ $("checkoutForm").addEventListener("submit", async (e) => {
   }
 });
 
+/* Paynow return — the result webhook updates the order, so poll briefly for confirmation */
+async function pollPaidOrder(orderId) {
+  for (let i = 0; i < 6; i++) {
+    try {
+      const res = await fetch("/api/orders/lookup?ref=" + encodeURIComponent(orderId));
+      const order = await res.json().catch(() => ({}));
+      if (res.ok && order.status && order.status !== "pending_payment") {
+        $("successMsg").textContent = order.status === "paid_escrow"
+          ? "Payment received — your order is being prepared."
+          : "Order status: " + String(order.status).replace(/_/g, " ") + ".";
+        return;
+      }
+    } catch { /* keep polling */ }
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+}
+
+function showPaidReturn() {
+  const params = new URLSearchParams(location.search);
+  if (params.get("paid") !== "1") return false;
+  const orderId = sessionStorage.getItem("pendingOrderId") || "";
+  clearCart();
+  syncCartBadge();
+  $("detailsCard").classList.add("hidden");
+  $("cartItems").innerHTML = "";
+  $("successCard").classList.remove("hidden");
+  $("successMsg").textContent = "We're confirming your Paynow payment. This page updates when the bank confirms it.";
+  $("orderIdLine").textContent = orderId ? `Order ID: ${orderId}` : "";
+  if (orderId) {
+    $("trackLink").href = `track.html?order=${encodeURIComponent(orderId)}`;
+    pollPaidOrder(orderId);
+  }
+  sessionStorage.removeItem("pendingOrderId");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  return true;
+}
+
 /* Init */
-renderCart();
-quoteFee();
+if (!showPaidReturn()) {
+  renderCart();
+  quoteFee();
+}

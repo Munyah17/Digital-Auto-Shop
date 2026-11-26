@@ -56,8 +56,19 @@
         <a href="index.html" class="nav-link">← Storefront</a>
         <a href="vendor.html" class="nav-link">Seller Dashboard</a>
         <a href="track.html" class="nav-link active">Track Order</a>
-        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode" style="margin-left:auto"></button>
       </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Storefront</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="vendor.html">Seller Dashboard</a>
+      <a href="track.html" class="active">Track Order</a>
     </div>
   </header>
 
@@ -74,6 +85,7 @@
   </div>
 
   <div class="toast" id="toast"></div>
+  <script src="page.js"></script>
   <script src="track.js"></script>
 </body>
 </html>

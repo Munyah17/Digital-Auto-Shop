@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign in — Digital Auto Shop</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <script src="theme.js"></script>
+</head>
+<body>
+  <header class="header" style="position:static">
+    <div class="container header-inner">
+      <a href="index.html" class="logo">
+        <span class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg></span>
+        <span class="logo-text">Digital<em>Auto</em>Shop</span>
+      </a>
+      <nav class="nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="register.html" class="nav-link">Create account</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
+        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+      </div>
+    </div>
+    <div class="mobile-nav" id="mobileNav">
+      <a href="index.html">Home</a>
+      <a href="shop.html">Shop</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
+      <a href="register.html">Create account</a>
+    </div>
+  </header>
+
+  <main class="auth-card">
+    <h1>Sign in</h1>
+    <p class="lede">See your orders and transactions. Checkout does not require an account.</p>
+    <form id="loginForm">
+      <div class="co-field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required /></div>
+      <div class="co-field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required /></div>
+      <button class="btn btn-solid" type="submit" id="submitBtn" style="width:100%">Sign in</button>
+      <p class="form-status" id="formStatus" role="status"></p>
+    </form>
+    <p class="switch">New here? <a href="register.html">Create an account</a></p>
+    <p class="switch">Shop staff: <a href="vendor.html">Vendor portal</a> · <a href="admin.html">Admin portal</a></p>
+  </main>
+  <script src="page.js"></script>
+  <script src="session.js"></script>
+  <script src="login.js"></script>
+</body>
+</html>

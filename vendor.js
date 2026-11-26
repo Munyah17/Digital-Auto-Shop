@@ -2,6 +2,7 @@
 
 const API = "/api";
 const LS_VENDOR = "das_vendor_id";
+const LS_TOKEN = "das_vendor_token";
 
 const $ = (id) => document.getElementById(id);
 const toast = $("toast");
@@ -14,8 +15,9 @@ function showToast(msg) {
 }
 
 async function api(path, opts = {}) {
+  const token = localStorage.getItem(LS_TOKEN);
   const res = await fetch(API + path, {
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined,
   });
@@ -29,6 +31,18 @@ let products = [];
 let orders = [];
 
 /* ---------- Auth ---------- */
+async function enterDashboard(id) {
+  const vendors = await api("/vendors");
+  vendor = vendors.find((v) => v.id === id);
+  if (!vendor) throw new Error("Vendor not found");
+  localStorage.setItem(LS_VENDOR, id);
+  await refresh();
+  $("loginCard").classList.add("hidden");
+  $("dash").classList.remove("hidden");
+  $("vendorName").textContent = vendor.name;
+  $("vendorMeta").textContent = `${vendor.location || ""} • ${vendor.phone} • KYC: ${vendor.kycStatus}`;
+}
+
 async function initLogin() {
   try {
     const vendors = await api("/vendors");
@@ -40,15 +54,25 @@ async function initLogin() {
   }
 
   const saved = localStorage.getItem(LS_VENDOR);
-  if (saved) {
-    $("vendorSelect").value = saved;
-    login(saved);
+  const token = localStorage.getItem(LS_TOKEN);
+  if (saved) $("vendorSelect").value = saved;
+  if (saved && token) {
+    try { await enterDashboard(saved); return; }
+    catch { localStorage.removeItem(LS_VENDOR); localStorage.removeItem(LS_TOKEN); }
   }
 }
 
-$("loginBtn").addEventListener("click", () => {
+$("loginBtn").addEventListener("click", async () => {
   const id = $("vendorSelect").value;
-  if (id) login(id);
+  const password = $("vendorPass").value;
+  if (!id) { showToast("Select your shop"); return; }
+  if (!password) { showToast("Enter portal password"); return; }
+  try {
+    const data = await api("/auth/login", { method: "POST", body: { role: "vendor", vendorId: id, password } });
+    localStorage.setItem(LS_TOKEN, data.token);
+    $("vendorPass").value = "";
+    await enterDashboard(id);
+  } catch (err) { showToast(err.message); }
 });
 
 $("registerToggle").addEventListener("click", (e) => {
@@ -62,27 +86,20 @@ $("regBtn").addEventListener("click", async () => {
       method: "POST",
       body: { name: $("regName").value, phone: $("regPhone").value, location: $("regLocation").value },
     });
-    showToast("Account created — logging in");
-    login(v.id);
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.textContent = `${v.name} — ${v.location || ""}`;
+    $("vendorSelect").appendChild(opt);
+    $("vendorSelect").value = v.id;
+    $("registerForm").classList.add("hidden");
+    $("regName").value = $("regPhone").value = $("regLocation").value = "";
+    showToast("Account created — enter portal password to sign in");
   } catch (err) { showToast(err.message); }
 });
 
-async function login(id) {
-  try {
-    const vendors = await api("/vendors");
-    vendor = vendors.find((v) => v.id === id);
-    if (!vendor) throw new Error("Vendor not found");
-    localStorage.setItem(LS_VENDOR, id);
-    $("loginCard").classList.add("hidden");
-    $("dash").classList.remove("hidden");
-    $("vendorName").textContent = vendor.name;
-    $("vendorMeta").textContent = `${vendor.location || ""} • ${vendor.phone} • KYC: ${vendor.kycStatus}`;
-    await refresh();
-  } catch (err) { showToast(err.message); }
-}
-
 $("logoutBtn").addEventListener("click", () => {
   localStorage.removeItem(LS_VENDOR);
+  localStorage.removeItem(LS_TOKEN);
   location.reload();
 });
 
@@ -101,11 +118,11 @@ document.querySelectorAll(".tab").forEach((t) =>
 async function refresh() {
   const [prods, ords, payout] = await Promise.all([
     api(`/vendors/${vendor.id}/products`),
-    api("/orders"),
+    api(`/vendors/${vendor.id}/orders`),
     api(`/vendors/${vendor.id}/payouts`).catch(() => null),
   ]);
   products = prods;
-  orders = ords.filter((o) => o.lines.some((l) => l.vendorId === vendor.id));
+  orders = ords;
   renderStats(payout);
   renderProducts();
   renderOrders();
@@ -147,8 +164,8 @@ $("productForm").addEventListener("submit", async (e) => {
 function renderProducts() {
   $("productRows").innerHTML = products.map((p) => `
     <tr>
-      <td><strong>${p.name}</strong></td>
-      <td>${p.category}</td>
+      <td><strong>${escapeHtml(p.name)}</strong></td>
+      <td>${escapeHtml(p.category)}</td>
       <td>${fmt(p.price)}</td>
       <td>
         <input type="number" value="${p.stock}" min="0" data-id="${p.id}" class="stock-input"
@@ -190,15 +207,18 @@ function renderOrders() {
   $("orderRows").innerHTML = orders.map((o) => {
     const items = o.lines.filter((l) => l.vendorId === vendor.id);
     const action = NEXT_ACTION[o.status];
+    const address = o.fulfillment === "delivery" && o.deliveryAddress
+      ? `<br/><span style="font-size:.74rem;color:var(--muted)">${escapeHtml(o.deliveryAddress)}</span>`
+      : "";
     return `
     <tr>
-      <td><strong>${o.id}</strong><br/><span style="font-size:.74rem;color:var(--muted)">${o.createdAt.slice(0, 10)}</span></td>
-      <td>${o.buyer.name}<br/><span style="font-size:.74rem;color:var(--muted)">${o.buyer.phone}</span></td>
-      <td>${items.map((l) => `${l.qty}× ${l.name}`).join("<br/>")}</td>
+      <td><strong>${escapeHtml(o.id)}</strong><br/><span style="font-size:.74rem;color:var(--muted)">${escapeHtml(String(o.createdAt || "").slice(0, 10))}</span></td>
+      <td>${escapeHtml(o.buyer.name)}<br/><span style="font-size:.74rem;color:var(--muted)">${escapeHtml(o.buyer.phone)}</span>${address}</td>
+      <td>${items.map((l) => `${l.qty}× ${escapeHtml(l.name)}`).join("<br/>")}</td>
       <td>${fmt(items.reduce((s, l) => s + l.lineTotal, 0))}</td>
       <td>${o.fulfillment}</td>
-      <td><span class="pill ${o.status}">${o.status.replace(/_/g, " ")}</span></td>
-      <td>${action ? `<button class="btn btn-primary btn-sm" data-order="${o.id}" data-to="${action.to}">${action.label}</button>` : "—"}</td>
+      <td><span class="pill ${escapeHtml(o.status)}">${escapeHtml(o.status.replace(/_/g, " "))}</span></td>
+      <td>${action ? `<button class="btn btn-solid btn-sm" data-order="${escapeHtml(o.id)}" data-to="${action.to}">${action.label}</button>` : "—"}</td>
     </tr>`;
   }).join("") || `<tr><td colspan="7" style="color:var(--muted);text-align:center;padding:24px">No orders yet.</td></tr>`;
 }
@@ -223,7 +243,7 @@ function renderPosProducts() {
   const sel = $("posProduct");
   const active = products.filter((p) => p.active !== false && p.stock > 0);
   sel.innerHTML = active.map((p) =>
-    `<option value="${p.id}">${p.name} — ${fmt(p.price)} (${p.stock} in stock)</option>`
+    `<option value="${escapeHtml(p.id)}">${escapeHtml(p.name)} — ${fmt(p.price)} (${p.stock} in stock)</option>`
   ).join("") || `<option value="">No products in stock</option>`;
 }
 
@@ -234,7 +254,7 @@ function renderPosCart() {
   } else {
     wrap.innerHTML = posCart.map((c, i) => `
       <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line)">
-        <span>${c.qty}× ${c.name}</span>
+        <span>${c.qty}× ${escapeHtml(c.name)}</span>
         <span>${fmt(c.price * c.qty)} <button type="button" data-posdel="${i}" style="border:none;background:none;color:#b91c1c;cursor:pointer;font-weight:700">✕</button></span>
       </div>`).join("");
   }
@@ -276,7 +296,7 @@ $("posComplete").addEventListener("click", async () => {
     $("posReceipt").classList.remove("hidden");
     $("posReceipt").innerHTML = `
       <strong>Sale complete — ${order.id}</strong><br/>
-      ${order.lines.map((l) => `${l.qty}× ${l.name}`).join("<br/>")}
+      ${order.lines.map((l) => `${l.qty}× ${escapeHtml(l.name)}`).join("<br/>")}
       <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
         Total: <strong>${fmt(order.total)}</strong> • Commission: ${fmt(order.commission)} • Net: ${fmt(order.total - order.commission)}
       </div>`;
@@ -298,6 +318,9 @@ function renderPayouts(p) {
   ].map(([l, v]) => `<div class="stat-card"><span>${l}</span><strong>${v}</strong></div>`).join("");
 }
 
+function escapeHtml(value) {
+  return String(value || "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+}
 const fmt = (n) => "$" + Number(n).toLocaleString();
 
 initLogin();

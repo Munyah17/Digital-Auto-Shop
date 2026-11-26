@@ -1,0 +1,8 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH="$HOME/public_html/"
+    - /bin/cp -f ./*.html "$DEPLOYPATH"
+    - /bin/cp -f ./*.css "$DEPLOYPATH"
+    - /bin/cp -f ./*.php "$DEPLOYPATH"
+    - for file in ./*.js; do case "$file" in ./server.js) ;; *) /bin/cp -f "$file" "$DEPLOYPATH";; esac; done
