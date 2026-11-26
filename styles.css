@@ -775,8 +775,8 @@ html[data-theme="dark"] .trust { /* keep overlap */ }
 html[data-theme="dark"] .toast { background: #e6edf7; color: #0b1526; }
 
 /* Product card action buttons */
-.p-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
-.p-buy, .p-add { padding: 9px 10px; border-radius: 9px; font-size: .8rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .18s ease; border: none; }
+.p-actions { display: flex; flex-direction: column; gap: 7px; margin-top: 12px; }
+.p-buy, .p-add { width: 100%; padding: 9px 10px; border-radius: 9px; font-size: .8rem; font-weight: 600; font-family: inherit; cursor: pointer; transition: all .18s ease; border: none; white-space: nowrap; }
 .p-buy { background: var(--blue-600); color: #fff; }
 .p-buy:hover { background: var(--blue-700); transform: translateY(-1px); }
 .p-add { background: var(--blue-50); color: var(--blue-700); outline: 1.5px solid var(--blue-600); }
