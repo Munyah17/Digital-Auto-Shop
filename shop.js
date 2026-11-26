@@ -141,6 +141,7 @@ function getFiltered() {
 function applyFilters() {
   syncHeading();
   markNav();
+  document.querySelector(".shop-layout")?.classList.toggle("no-filters", state.category !== "all");
   const list = getFiltered();
   const grid = document.getElementById("shopGrid");
   document.getElementById("shopCount").textContent = `${list.length} product${list.length === 1 ? "" : "s"}`;
