@@ -1,4 +1,4 @@
-if (getCustomer()) location.replace("account.html");
+﻿if (getCustomer()) location.replace("dashboard.html");
 
 const form = document.getElementById("loginForm");
 const statusEl = document.getElementById("formStatus");
@@ -23,7 +23,7 @@ form.addEventListener("submit", async (e) => {
     if (!res.ok) throw new Error(data.error || "Could not sign in");
     setCustomer(data);
     const next = new URLSearchParams(location.search).get("next");
-    location.href = next && /^[a-z0-9.-]+\.html$/.test(next) ? next : "account.html";
+    location.href = next && /^[a-z0-9.-]+\.html$/.test(next) ? next : "dashboard.html";
   } catch (err) {
     statusEl.className = "form-status err";
     statusEl.textContent = err.message;

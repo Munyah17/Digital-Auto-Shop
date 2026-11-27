@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>My Dashboard — Digital Auto Shop</title>
+  <meta name="description" content="Customer dashboard — orders, payments and account."/>
+  <link href="cooladmin/css/font-face.css" rel="stylesheet" media="all"/>
+  <link rel="preconnect" href="https://rsms.me/"/>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css"/>
+  <link href="cooladmin/vendor/fontawesome-7.3.1/css/all.min.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/vendor/bootstrap-5.3.9.min.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/vendor/css-hamburgers/hamburgers.min.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/css/theme.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/css/app.css" rel="stylesheet" media="all"/>
+</head>
+<body class="app">
+<a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
+<div class="page-wrapper">
+
+  <!-- Mobile header -->
+  <header class="header-mobile d-block d-lg-none">
+    <div class="header-mobile__bar">
+      <div class="container-fluid">
+        <div class="header-mobile-inner">
+          <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">D</span><span class="logo-text">Auto Shop</span></a>
+          <button class="hamburger hamburger--slider" type="button" aria-label="Toggle navigation"><span class="hamburger-box"><span class="hamburger-inner"></span></span></button>
+        </div>
+      </div>
+    </div>
+    <nav class="navbar-mobile">
+      <div class="container-fluid">
+        <ul class="navbar-mobile__list list-unstyled">
+          <li><a href="#" data-panel-link="overview"><i class="fa-solid fa-gauge-high"></i>Overview</a></li>
+          <li><a href="#" data-panel-link="orders"><i class="fa-solid fa-bag-shopping"></i>My Orders</a></li>
+          <li><a href="#" data-panel-link="profile"><i class="fa-solid fa-user"></i>Profile</a></li>
+          <li><a href="index.html"><i class="fa-solid fa-store"></i>Back to Shop</a></li>
+          <li><a href="#" id="mobileLogout"><i class="fa-solid fa-power-off"></i>Logout</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="menu-sidebar" id="main-sidebar">
+    <div class="logo">
+      <a class="logo-link" href="index.html" aria-label="Digital Auto Shop"><span class="logo-mark" aria-hidden="true">D</span><span class="logo-text">Auto Shop</span></a>
+      <button class="sidebar-close js-sidebar-toggle" type="button" aria-label="Close navigation"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="menu-sidebar__content js-scrollbar1">
+      <nav class="navbar-sidebar">
+        <ul class="list-unstyled navbar__list">
+          <li class="active"><a href="#" data-panel-link="overview"><i class="fa-solid fa-gauge-high"></i>Overview</a></li>
+          <li><a href="#" data-panel-link="orders"><i class="fa-solid fa-bag-shopping"></i>My Orders</a></li>
+          <li><a href="#" data-panel-link="profile"><i class="fa-solid fa-user"></i>Profile</a></li>
+          <li><a href="track.html"><i class="fa-solid fa-location-dot"></i>Track Order</a></li>
+          <li><a href="index.html"><i class="fa-solid fa-store"></i>Back to Shop</a></li>
+          <li><a href="#" id="sidebarLogout"><i class="fa-solid fa-power-off"></i>Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
+
+  <div class="page-container">
+    <header class="header-desktop">
+      <div class="section__content section__content--p30">
+        <div class="container-fluid">
+          <div class="header-wrap">
+            <button class="sidebar-toggle js-sidebar-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-sidebar"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+            <div class="header-button">
+              <div class="account-wrap">
+                <div class="account-item clearfix js-item-menu" role="button" tabindex="0" aria-haspopup="true" aria-label="Account menu">
+                  <div class="image"><img src="cooladmin/images/icon/avatar-01.jpg" alt="Customer"></div>
+                  <div class="content"><a class="js-acc-btn" href="#" id="acctName">Customer</a></div>
+                  <div class="account-dropdown js-dropdown">
+                    <div class="info clearfix">
+                      <div class="image"><a href="#"><img src="cooladmin/images/icon/avatar-01.jpg" alt="Customer"></a></div>
+                      <div class="content">
+                        <h5 class="name"><a href="#" id="acctName2">Customer</a></h5><span class="email" id="acctEmail"></span>
+                      </div>
+                    </div>
+                    <div class="account-dropdown__body">
+                      <div class="account-dropdown__item"><a href="#" data-panel-link="profile"><i class="fa-solid fa-user"></i>Profile</a></div>
+                      <div class="account-dropdown__item"><a href="#" data-panel-link="orders"><i class="fa-solid fa-bag-shopping"></i>My Orders</a></div>
+                      <div class="account-dropdown__item"><a href="track.html"><i class="fa-solid fa-location-dot"></i>Track Order</a></div>
+                    </div>
+                    <div class="account-dropdown__footer"><a href="#" id="headerLogout"><i class="fa-solid fa-power-off"></i>Logout</a></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main-content" id="main-content">
+      <div class="section__content section__content--p30">
+        <div class="container-fluid">
+
+          <!-- ============ OVERVIEW ============ -->
+          <section class="dash-panel" id="panel-overview">
+            <div class="page-header">
+              <div>
+                <h1>Overview</h1>
+                <p class="subtitle" id="welcomeLine">Welcome back — here&rsquo;s your account at a glance.</p>
+              </div>
+              <div class="page-header__actions">
+                <a class="m-btn m-btn--ghost" href="shop.html"><i class="fa-solid fa-store"></i> Continue Shopping</a>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-sm-6 col-lg-3"><article class="stat-card"><div class="stat-card__head"><p class="stat-card__label">Total Orders</p><span class="stat-card__icon stat-card__icon--c1"><i class="fa-solid fa-bag-shopping"></i></span></div><p class="stat-card__value" id="statOrders">0</p><p class="stat-card__delta stat-card__delta--up"><i class="fa-solid fa-arrow-up"></i> all time</p></article></div>
+              <div class="col-sm-6 col-lg-3"><article class="stat-card"><div class="stat-card__head"><p class="stat-card__label">Open Orders</p><span class="stat-card__icon stat-card__icon--c2"><i class="fa-solid fa-truck-fast"></i></span></div><p class="stat-card__value" id="statOpen">0</p><p class="stat-card__delta stat-card__delta--up"><i class="fa-solid fa-arrow-up"></i> in progress</p></article></div>
+              <div class="col-sm-6 col-lg-3"><article class="stat-card"><div class="stat-card__head"><p class="stat-card__label">Total Spent</p><span class="stat-card__icon stat-card__icon--c3"><i class="fa-solid fa-dollar-sign"></i></span></div><p class="stat-card__value" id="statSpent">$0</p><p class="stat-card__delta stat-card__delta--up"><i class="fa-solid fa-arrow-up"></i> lifetime</p></article></div>
+              <div class="col-sm-6 col-lg-3"><article class="stat-card"><div class="stat-card__head"><p class="stat-card__label">Awaiting Payment</p><span class="stat-card__icon stat-card__icon--c4"><i class="fa-solid fa-credit-card"></i></span></div><p class="stat-card__value" id="statPending">0</p><p class="stat-card__delta stat-card__delta--down"><i class="fa-solid fa-arrow-down"></i> needs action</p></article></div>
+            </div>
+
+            <div class="row mt-4">
+              <div class="col-lg-8">
+                <div class="card-block">
+                  <div class="row"><div class="col-md-12"><h3 class="title"><i class="fa-solid fa-clock-rotate-left"></i> Recent Orders</h3></div></div>
+                  <div class="table-responsive">
+                    <table class="m-table">
+                      <thead><tr><th scope="col">Order</th><th scope="col">Date</th><th scope="col" class="num">Total</th><th scope="col">Status</th><th scope="col"></th></tr></thead>
+                      <tbody id="recentOrdersBody"><tr><td colspan="5" class="text-center text-muted py-4">Loading…</td></tr></tbody>
+                    </table>
+                  </div>
+                  <div class="text-end mt-3"><a href="#" data-panel-link="orders">View all orders <i class="fa-solid fa-arrow-right"></i></a></div>
+                </div>
+              </div>
+              <div class="col-lg-4">
+                <div class="card-block">
+                  <div class="row"><div class="col-md-12"><h3 class="title"><i class="fa-solid fa-bolt"></i> Quick Actions</h3></div></div>
+                  <div class="d-grid gap-2">
+                    <a class="m-btn m-btn--ghost" href="shop.html"><i class="fa-solid fa-store"></i> Browse Shop</a>
+                    <a class="m-btn m-btn--ghost" href="track.html"><i class="fa-solid fa-location-dot"></i> Track an Order</a>
+                    <a class="m-btn m-btn--ghost" href="#" data-panel-link="profile"><i class="fa-solid fa-user"></i> Edit Profile</a>
+                  </div>
+                </div>
+                <div class="card-block">
+                  <div class="row"><div class="col-md-12"><h3 class="title"><i class="fa-solid fa-circle-info"></i> Need Help?</h3></div></div>
+                  <p class="text-muted" style="font-size:.9rem">Questions about an order? Use <strong>Track Order</strong> or contact support via WhatsApp <strong>+263 77 390 9307</strong>.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ ORDERS ============ -->
+          <section class="dash-panel d-none" id="panel-orders">
+            <div class="page-header">
+              <div>
+                <h1>My Orders</h1>
+                <p class="subtitle">Every order you&rsquo;ve placed — payments, fulfilment and status in one place.</p>
+              </div>
+            </div>
+            <div class="card-block">
+              <div class="table-responsive">
+                <table class="m-table">
+                  <thead><tr>
+                    <th scope="col">Order ID</th><th scope="col">Date</th><th scope="col">Items</th>
+                    <th scope="col">Fulfilment</th><th scope="col">Payment</th><th scope="col" class="num">Total</th>
+                    <th scope="col">Status</th><th scope="col"></th>
+                  </tr></thead>
+                  <tbody id="ordersBody"><tr><td colspan="8" class="text-center text-muted py-4">Loading…</td></tr></tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+
+          <!-- ============ PROFILE ============ -->
+          <section class="dash-panel d-none" id="panel-profile">
+            <div class="page-header">
+              <div>
+                <h1>Profile</h1>
+                <p class="subtitle">Your account details.</p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-5">
+                <div class="card-block text-center">
+                  <img src="cooladmin/images/icon/avatar-01.jpg" alt="Customer" class="img-thumbnail rounded-circle mb-3" style="width:96px;height:96px;object-fit:cover"/>
+                  <h3 id="profName">—</h3>
+                  <p class="text-muted" id="profEmail">—</p>
+                  <p class="text-muted"><i class="fa-solid fa-phone"></i> <span id="profPhone">—</span></p>
+                  <p class="text-muted"><i class="fa-solid fa-calendar"></i> Member since <span id="profSince">—</span></p>
+                </div>
+              </div>
+              <div class="col-lg-7">
+                <div class="card-block">
+                  <h3 class="title"><i class="fa-solid fa-id-card"></i> Account Details</h3>
+                  <table class="m-table">
+                    <tbody>
+                      <tr><td class="text-muted" style="width:40%">Full name</td><td id="profName2">—</td></tr>
+                      <tr><td class="text-muted">Email</td><td id="profEmail2">—</td></tr>
+                      <tr><td class="text-muted">Phone</td><td id="profPhone2">—</td></tr>
+                      <tr><td class="text-muted">Customer ID</td><td><code id="profId">—</code></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="card-block">
+                  <h3 class="title"><i class="fa-solid fa-shield-halved"></i> Security</h3>
+                  <p class="text-muted" style="font-size:.9rem">Your password is stored securely (hashed) and never visible to anyone, including us. To change it, contact support.</p>
+                  <button class="m-btn m-btn--ghost" id="logoutBtn2"><i class="fa-solid fa-power-off"></i> Sign Out</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script src="session.js"></script>
+<script src="cooladmin/js/vanilla-utils.js"></script>
+<script src="cooladmin/vendor/bootstrap-5.3.9.bundle.min.js"></script>
+<script src="cooladmin/js/bootstrap5-init.js"></script>
+<script src="cooladmin/js/main-vanilla.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-/* Checkout — guest checkout is allowed. A signed-in customer gets the order on their account. */
+﻿/* Checkout â€” guest checkout is allowed. A signed-in customer gets the order on their account. */
 
 const fmt = (n) => "$" + Number(n).toLocaleString();
 const $ = (id) => document.getElementById(id);
@@ -19,10 +19,10 @@ function renderCart() {
     <div class="co-item">
       <div>
         <strong style="font-size:.86rem">${c.name}</strong><br/>
-        <span style="font-size:.76rem;color:var(--muted)">${c.vendor} • ${fmt(c.price)} each</span>
+        <span style="font-size:.76rem;color:var(--muted)">${c.vendor} â€¢ ${fmt(c.price)} each</span>
       </div>
       <div class="qty-ctrl">
-        <button type="button" data-dec="${c.name}">−</button>
+        <button type="button" data-dec="${c.name}">âˆ’</button>
         <span>${c.qty}</span>
         <button type="button" data-inc="${c.name}">+</button>
       </div>
@@ -52,14 +52,14 @@ async function quoteFee() {
     feeInfo = await (await fetch(`/api/delivery-fee?${q}`)).json();
     deliveryFee = feeInfo.fee || 0;
   } catch {
-    // fallback rate if API offline — no free delivery
+    // fallback rate if API offline â€” no free delivery
     deliveryFee = 4 + 1.1 * km;
     feeInfo = { fee: deliveryFee, freeDeliveryApplied: false };
   }
   updateTotal();
 }
 
-/* Payment method toggle — bank transfer fields + Paynow note */
+/* Payment method toggle â€” bank transfer fields + Paynow note */
 document.querySelectorAll('input[name="pay"]').forEach((r) =>
   r.addEventListener("change", () => {
     const isBank = r.value === "bank_transfer" && r.checked;
@@ -79,7 +79,7 @@ async function loadBankDetails() {
       `<div><strong>Branch:</strong> ${d.branch}</div>` +
       `<div><strong>${d.currency} Account:</strong> ${d.account}</div>`;
   } catch {
-    $("bankDetails").innerHTML = "<em>Bank details unavailable — API offline.</em>";
+    $("bankDetails").innerHTML = "<em>Bank details unavailable â€” API offline.</em>";
   }
 }
 
@@ -113,13 +113,13 @@ $("cartItems").addEventListener("click", (e) => {
 const signedIn = getCustomer();
 const accountNote = $("checkoutAccount");
 if (signedIn) {
-  accountNote.innerHTML = `Signed in as <strong></strong>. This order is saved to your account. <a href="account.html">View orders</a>`;
+  accountNote.innerHTML = `Signed in as <strong></strong>. This order is saved to your account. <a href="dashboard.html">View orders</a>`;
   accountNote.querySelector("strong").textContent = signedIn.name || signedIn.email;
   if (!$("buyerName").value) $("buyerName").value = signedIn.name || "";
   if (!$("buyerPhone").value) $("buyerPhone").value = signedIn.phone || "";
   if (!$("orderEmail").value) $("orderEmail").value = signedIn.email || "";
 } else {
-  accountNote.innerHTML = `Guest checkout — no account needed. <a href="register.html">Create an account</a> if you want these orders in one place.`;
+  accountNote.innerHTML = `Guest checkout â€” no account needed. <a href="register.html">Create an account</a> if you want these orders in one place.`;
 }
 
 /* Submit */
@@ -181,7 +181,7 @@ $("checkoutForm").addEventListener("submit", async (e) => {
   }
 
   $("placeOrder").disabled = true;
-  $("placeOrder").textContent = "Placing order…";
+  $("placeOrder").textContent = "Placing orderâ€¦";
   try {
     // map cart names to catalogue products for IDs
     const all = typeof ALL_PRODUCTS !== "undefined" ? ALL_PRODUCTS : [];
@@ -199,7 +199,7 @@ $("checkoutForm").addEventListener("submit", async (e) => {
     const order = await res.json();
     if (!res.ok) throw new Error(order.error || "Order failed");
 
-    // Paynow methods → redirect to hosted checkout
+    // Paynow methods â†’ redirect to hosted checkout
     if (["ecocash", "onemoney", "card"].includes(pay)) {
       try {
         const init = await (await fetch("/api/paynow/initiate", {
@@ -232,7 +232,7 @@ $("checkoutForm").addEventListener("submit", async (e) => {
       $("pickupCodeBox").textContent = order.pickupCode;
     }
     if (pay === "bank_transfer") $("bankSuccessNote").classList.remove("hidden");
-    $("orderIdLine").textContent = `Order ID: ${order.id} — Total: ${fmt(order.total)}`;
+    $("orderIdLine").textContent = `Order ID: ${order.id} â€” Total: ${fmt(order.total)}`;
     $("trackLink").href = `track.html?order=${encodeURIComponent(order.id)}`;
     sessionStorage.setItem("lastOrderId", order.id);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -244,7 +244,7 @@ $("checkoutForm").addEventListener("submit", async (e) => {
   }
 });
 
-/* Paynow return — the result webhook updates the order, so poll briefly for confirmation */
+/* Paynow return â€” the result webhook updates the order, so poll briefly for confirmation */
 async function pollPaidOrder(orderId) {
   for (let i = 0; i < 6; i++) {
     try {
@@ -252,7 +252,7 @@ async function pollPaidOrder(orderId) {
       const order = await res.json().catch(() => ({}));
       if (res.ok && order.status && order.status !== "pending_payment") {
         $("successMsg").textContent = order.status === "paid_escrow"
-          ? "Payment received — your order is being prepared."
+          ? "Payment received â€” your order is being prepared."
           : "Order status: " + String(order.status).replace(/_/g, " ") + ".";
         return;
       }

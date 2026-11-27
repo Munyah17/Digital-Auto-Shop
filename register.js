@@ -1,4 +1,4 @@
-if (getCustomer()) location.replace("account.html");
+﻿if (getCustomer()) location.replace("dashboard.html");
 
 const form = document.getElementById("registerForm");
 const statusEl = document.getElementById("formStatus");
@@ -23,7 +23,7 @@ form.addEventListener("submit", async (e) => {
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "Could not create the account");
     setCustomer(data);
-    location.href = "account.html";
+    location.href = "dashboard.html";
   } catch (err) {
     statusEl.className = "form-status err";
     statusEl.textContent = err.message;

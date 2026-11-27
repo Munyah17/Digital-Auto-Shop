@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Seller Dashboard — Digital Auto Shop</title>
+  <title>Seller Dashboard â€” Digital Auto Shop</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
@@ -54,7 +54,7 @@
       table { min-width: 640px; }
     }
 
-    /* Dark theme (inline styles load after styles.css — must live here too) */
+    /* Dark theme (inline styles load after styles.css â€” must live here too) */
     html[data-theme="dark"] .stat-card, html[data-theme="dark"] .panel,
     html[data-theme="dark"] .login-card { background: var(--card); border-color: var(--card-border); }
     html[data-theme="dark"] .login-card h1, html[data-theme="dark"] .dash-head h1 { color: var(--ink); }
@@ -85,7 +85,7 @@
         <span class="logo-text">Digital<em>Auto</em>Shop</span>
       </a>
       <nav class="nav">
-        <a href="index.html" class="nav-link">← Storefront</a>
+        <a href="index.html" class="nav-link">â† Storefront</a>
         <a href="vendor.html" class="nav-link active">Vendor portal</a>
         <a href="track.html" class="nav-link">Track Order</a>
       </nav>
@@ -99,7 +99,7 @@
       <a href="about.html">About</a>
       <a href="contact.html">Contact</a>
       <a href="vendor.html" class="active">Vendor portal</a>
-      <a href="account.html">Customer account</a>
+      <a href="dashboard.html">Customer account</a>
       <a href="track.html">Track Order</a>
     </div>
   </header>
@@ -108,10 +108,10 @@
   <div class="login-card" id="loginCard">
     <h1>Seller Dashboard</h1>
     <p>Sign in with your vendor account to manage inventory, orders and payouts.</p>
-    <select id="vendorSelect"><option value="">Loading vendors…</option></select>
+    <select id="vendorSelect"><option value="">Loading vendorsâ€¦</option></select>
     <input id="vendorPass" type="password" placeholder="Portal password" autocomplete="current-password" />
     <button class="btn btn-solid" id="loginBtn" style="width:100%">Continue</button>
-    <p style="margin-top:14px;font-size:.78rem">New seller? <a href="#" id="registerToggle" style="color:var(--blue-600);font-weight:600">Register your shop →</a></p>
+    <p style="margin-top:14px;font-size:.78rem">New seller? <a href="#" id="registerToggle" style="color:var(--blue-600);font-weight:600">Register your shop â†’</a></p>
     <div id="registerForm" class="hidden">
       <input id="regName" placeholder="Shop name" />
       <input id="regPhone" placeholder="Phone (EcoCash/OneMoney)" />
@@ -124,7 +124,7 @@
   <div class="dash hidden" id="dash">
     <div class="dash-head">
       <div>
-        <h1 id="vendorName">—</h1>
+        <h1 id="vendorName">â€”</h1>
         <p id="vendorMeta"></p>
       </div>
       <button class="btn btn-ghost" id="logoutBtn" style="border:1px solid var(--line);color:var(--ink)">Sign out</button>
@@ -166,7 +166,7 @@
 
     <!-- Point of Sale -->
     <div class="panel hidden" id="tab-pos">
-      <h2>Point of Sale — walk-in sale</h2>
+      <h2>Point of Sale â€” walk-in sale</h2>
       <div class="pos-layout">
         <div>
           <div class="field" style="margin-bottom:12px">
