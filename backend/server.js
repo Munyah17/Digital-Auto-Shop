@@ -8,6 +8,18 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
+
+/* Load backend/.env (gitignored) — real env vars always win */
+(function loadEnv() {
+  const envFile = path.join(__dirname, ".env");
+  if (!fs.existsSync(envFile)) return;
+  for (const line of fs.readFileSync(envFile, "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)\s*$/);
+    if (!m || line.trim().startsWith("#")) continue;
+    if (process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+})();
+
 const mail = require("./mail");
 
 const PORT = 3000;
@@ -663,7 +675,7 @@ const routes = [
       resulturl: `${base}/api/paynow/result`,
       status: "Message",
     };
-    const hash = crypto.createHash("sha512").update(Object.values(params).join("")).digest("hex");
+    const hash = crypto.createHash("sha512").update(Object.values(params).join("") + PAYNOW.key).digest("hex").toUpperCase();
     try {
       const r = await fetch(PAYNOW_INITIATE_URL, {
         method: "POST",
