@@ -1,117 +1,209 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Super Admin â€” Hero Slides | Digital Auto Shop</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
-  <script src="theme.js"></script>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Admin Portal — Digital Auto Shop</title>
+  <meta name="description" content="Super admin — orders, customers, vendors, plugins and homepage slides."/>
+  <link href="cooladmin/css/font-face.css" rel="stylesheet" media="all"/>
+  <link rel="preconnect" href="https://rsms.me/"/>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css"/>
+  <link href="cooladmin/vendor/fontawesome-7.3.1/css/all.min.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/vendor/bootstrap-5.3.9.min.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/vendor/css-hamburgers/hamburgers.min.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/css/theme.css" rel="stylesheet" media="all"/>
+  <link href="cooladmin/css/app.css" rel="stylesheet" media="all"/>
+  <link href="admin.css" rel="stylesheet" media="all"/>
 </head>
-<body>
+<body class="app">
+<a class="visually-hidden-focusable skip-link" href="#main-content">Skip to main content</a>
+<div class="page-wrapper">
 
-  <header class="header" style="position:static">
-    <div class="container header-inner">
-      <a href="index.html" class="logo">
-        <span class="logo-mark">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z"/></svg>
-        </span>
-        <span class="logo-text">Digital<em>Auto</em>Shop</span>
-      </a>
-      <nav class="nav">
-        <a href="index.html" class="nav-link">â† Storefront</a>
-        <a href="admin.html" class="nav-link active">Admin portal</a>
-        <a href="vendor.html" class="nav-link">Vendor portal</a>
-      </nav>
-      <div class="header-actions">
-        <button class="icon-btn theme-toggle" aria-label="Toggle dark mode"></button>
-        <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+  <!-- Mobile header -->
+  <header class="header-mobile d-block d-lg-none">
+    <div class="header-mobile__bar">
+      <div class="container-fluid">
+        <div class="header-mobile-inner">
+          <a class="logo" href="index.html"><span class="logo-mark" aria-hidden="true">D</span><span class="logo-text">Auto Shop</span></a>
+          <button class="hamburger hamburger--slider" type="button" aria-label="Toggle navigation"><span class="hamburger-box"><span class="hamburger-inner"></span></span></button>
+        </div>
       </div>
     </div>
-    <div class="mobile-nav" id="mobileNav">
-      <a href="index.html">Storefront</a>
-      <a href="about.html">About</a>
-      <a href="contact.html">Contact</a>
-      <a href="admin.html" class="active">Admin portal</a>
-      <a href="vendor.html">Vendor portal</a>
-      <a href="dashboard.html">Customer account</a>
-    </div>
+    <nav class="navbar-mobile">
+      <div class="container-fluid">
+        <ul class="navbar-mobile__list list-unstyled">
+          <li><a href="#" data-tab-link="overview"><i class="fa-solid fa-gauge-high"></i>Overview</a></li>
+          <li><a href="#" data-tab-link="orders"><i class="fa-solid fa-bag-shopping"></i>Orders</a></li>
+          <li><a href="#" data-tab-link="customers"><i class="fa-solid fa-users"></i>Customers</a></li>
+          <li><a href="#" data-tab-link="vendors"><i class="fa-solid fa-shop"></i>Vendors</a></li>
+          <li><a href="#" data-tab-link="slides"><i class="fa-solid fa-images"></i>Hero Slides</a></li>
+          <li><a href="#" data-tab-link="plugins"><i class="fa-solid fa-puzzle-piece"></i>Plugins</a></li>
+          <li><a href="#" data-tab-link="mail"><i class="fa-solid fa-envelope"></i>Mailbox</a></li>
+          <li><a href="index.html"><i class="fa-solid fa-store"></i>Back to Shop</a></li>
+          <li><a href="#" id="mobileLogout"><i class="fa-solid fa-power-off"></i>Logout</a></li>
+        </ul>
+      </div>
+    </nav>
   </header>
 
-  <div class="login-card" id="loginCard">
-    <h1>Super Admin</h1>
-    <p>Sign in to the admin portal. Orders, customers, vendors, mail and homepage slides.</p>
-    <input id="adminUser" placeholder="Username" autocomplete="username" />
-    <input id="adminPass" type="password" placeholder="Password" autocomplete="current-password" />
-    <div class="login-error" id="loginError"></div>
-    <button class="btn btn-solid" id="loginBtn">Sign in</button>
-  </div>
+  <!-- Sidebar -->
+  <aside class="menu-sidebar" id="main-sidebar">
+    <div class="logo">
+      <a class="logo-link" href="index.html" aria-label="Digital Auto Shop"><span class="logo-mark" aria-hidden="true">D</span><span class="logo-text">Auto Shop</span></a>
+      <button class="sidebar-close js-sidebar-toggle" type="button" aria-label="Close navigation"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+    </div>
+    <div class="menu-sidebar__content js-scrollbar1">
+      <nav class="navbar-sidebar">
+        <ul class="list-unstyled navbar__list">
+          <li class="active"><a href="#" data-tab-link="overview"><i class="fa-solid fa-gauge-high"></i>Overview</a></li>
+          <li><a href="#" data-tab-link="orders"><i class="fa-solid fa-bag-shopping"></i>Orders</a></li>
+          <li><a href="#" data-tab-link="customers"><i class="fa-solid fa-users"></i>Customers</a></li>
+          <li><a href="#" data-tab-link="vendors"><i class="fa-solid fa-shop"></i>Vendors</a></li>
+          <li><a href="#" data-tab-link="slides"><i class="fa-solid fa-images"></i>Hero Slides</a></li>
+          <li><a href="#" data-tab-link="plugins"><i class="fa-solid fa-puzzle-piece"></i>Plugins</a></li>
+          <li><a href="#" data-tab-link="mail"><i class="fa-solid fa-envelope"></i>Mailbox</a></li>
+          <li><a href="index.html"><i class="fa-solid fa-store"></i>Back to Shop</a></li>
+          <li><a href="vendor.html"><i class="fa-solid fa-grid-2"></i>Vendor Portal</a></li>
+          <li><a href="dashboard.html"><i class="fa-solid fa-user"></i>Customer Account</a></li>
+          <li><a href="#" id="sidebarLogout"><i class="fa-solid fa-power-off"></i>Logout</a></li>
+        </ul>
+      </nav>
+    </div>
+  </aside>
 
-  <div class="admin-wrap hidden portal" id="adminPanel">
-    <div class="portal-head">
-      <div>
-        <h1>Admin portal</h1>
-        <p>Orders, customers, vendors and the homepage.</p>
+  <div class="page-container">
+    <header class="header-desktop">
+      <div class="section__content section__content--p30">
+        <div class="container-fluid">
+          <div class="header-wrap">
+            <button class="sidebar-toggle js-sidebar-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="main-sidebar"><i class="fa-solid fa-bars" aria-hidden="true"></i></button>
+            <div class="header-button">
+              <div class="account-wrap">
+                <div class="account-item clearfix js-item-menu" role="button" tabindex="0" aria-haspopup="true" aria-label="Account menu">
+                  <div class="image"><img src="cooladmin/images/icon/avatar-01.jpg" alt="Admin"></div>
+                  <div class="content"><a class="js-acc-btn" href="#">Super Admin</a></div>
+                  <div class="account-dropdown js-dropdown">
+                    <div class="info clearfix">
+                      <div class="image"><a href="#"><img src="cooladmin/images/icon/avatar-01.jpg" alt="Admin"></a></div>
+                      <div class="content">
+                        <h5 class="name"><a href="#">Super Admin</a></h5><span class="email">admin@digitalauto.co.zw</span>
+                      </div>
+                    </div>
+                    <div class="account-dropdown__body">
+                      <div class="account-dropdown__item"><a href="#" data-tab-link="overview"><i class="fa-solid fa-gauge-high"></i>Overview</a></div>
+                      <div class="account-dropdown__item"><a href="#" data-tab-link="orders"><i class="fa-solid fa-bag-shopping"></i>Orders</a></div>
+                      <div class="account-dropdown__item"><a href="#" data-tab-link="plugins"><i class="fa-solid fa-puzzle-piece"></i>Plugins</a></div>
+                    </div>
+                    <div class="account-dropdown__footer"><a href="#" id="headerLogout"><i class="fa-solid fa-power-off"></i>Logout</a></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <button class="btn btn-line" id="adminLogout" type="button">Sign out</button>
-    </div>
-    <div class="portal-tabs" id="adminTabs">
-      <button class="portal-tab active" type="button" data-tab="overview">Overview</button>
-      <button class="portal-tab" type="button" data-tab="orders">Orders</button>
-      <button class="portal-tab" type="button" data-tab="customers">Customers</button>
-      <button class="portal-tab" type="button" data-tab="vendors">Vendors</button>
-      <button class="portal-tab" type="button" data-tab="slides">Hero slides</button>
-      <button class="portal-tab" type="button" data-tab="plugins">Plugins</button>
-      <button class="portal-tab" type="button" data-tab="mail">Mailbox</button>
-    </div>
-    <div data-panel="overview">
-      <div class="portal-stats" id="overviewStats"></div>
-    </div>
-    <div data-panel="orders" class="hidden" id="adminOrders"></div>
-    <div data-panel="customers" class="hidden" id="adminCustomers"></div>
-    <div data-panel="vendors" class="hidden" id="adminVendors"></div>
-    <div data-panel="slides" class="hidden">
-    <div class="admin-head">
-      <h1>Hero slides</h1>
-      <p>A slide appears on the homepage when it is active and has a banner.</p>
-    </div>
+    </header>
 
-    <div class="admin-note">
-      <strong>Banner field:</strong> paste an image URL (e.g. <code>https://â€¦/banner.jpg</code>) or pick a gradient preset
-      (<code>gradient-blue</code>, <code>gradient-cyan</code>, <code>gradient-indigo</code>, <code>gradient-sky</code>).
-      Leave empty to hide the slide completely. Changes save automatically to this browser â€”
-      in production this panel talks to the admin API (<code>/api/admin/slides</code>).
-    </div>
+    <main class="main-content" id="main-content">
+      <div class="section__content section__content--p30">
+        <div class="container-fluid">
 
-    <div id="slideList"></div>
+          <div class="login-card" id="loginCard">
+            <h1>Super Admin</h1>
+            <p>Sign in to the admin portal. Orders, customers, vendors, mail, plugins and homepage slides.</p>
+            <input id="adminUser" placeholder="Username" autocomplete="username" />
+            <input id="adminPass" type="password" placeholder="Password" autocomplete="current-password" />
+            <div class="login-error" id="loginError"></div>
+            <button class="btn btn-solid" id="loginBtn">Sign in</button>
+          </div>
 
-    <button class="btn btn-solid" id="addSlide" style="margin-bottom:24px">+ Add slide (max 10)</button>
+          <div class="portal hidden" id="adminPanel">
+            <div class="portal-head">
+              <div>
+                <h1>Admin portal</h1>
+                <p>Orders, customers, vendors, plugins and the homepage.</p>
+              </div>
+            </div>
+            <div class="portal-tabs" id="adminTabs">
+              <button class="portal-tab active" type="button" data-tab="overview">Overview</button>
+              <button class="portal-tab" type="button" data-tab="orders">Orders</button>
+              <button class="portal-tab" type="button" data-tab="customers">Customers</button>
+              <button class="portal-tab" type="button" data-tab="vendors">Vendors</button>
+              <button class="portal-tab" type="button" data-tab="slides">Hero slides</button>
+              <button class="portal-tab" type="button" data-tab="plugins">Plugins</button>
+              <button class="portal-tab" type="button" data-tab="mail">Mailbox</button>
+            </div>
+            <div data-panel="overview">
+              <div class="portal-stats" id="overviewStats"></div>
+            </div>
+            <div data-panel="orders" class="hidden" id="adminOrders"></div>
+            <div data-panel="customers" class="hidden" id="adminCustomers"></div>
+            <div data-panel="vendors" class="hidden" id="adminVendors"></div>
+            <div data-panel="slides" class="hidden">
+              <div class="admin-head">
+                <h1>Hero slides</h1>
+                <p>A slide appears on the homepage when it is active and has a banner.</p>
+              </div>
+              <div class="admin-note">
+                <strong>Banner field:</strong> paste an image URL (e.g. <code>https://…/banner.jpg</code>) or pick a gradient preset
+                (<code>gradient-blue</code>, <code>gradient-cyan</code>, <code>gradient-indigo</code>, <code>gradient-sky</code>).
+                Leave empty to hide the slide completely. Changes save automatically to this browser —
+                in production this panel talks to the admin API (<code>/api/admin/slides</code>).
+              </div>
+              <div id="slideList"></div>
+              <button class="btn btn-solid" id="addSlide" style="margin-bottom:24px">+ Add slide (max 10)</button>
+              <div style="display:flex;gap:12px;flex-wrap:wrap">
+                <button class="btn btn-ghost" id="resetDefaults">Reset to defaults</button>
+                <a class="btn btn-solid" href="index.html" target="_blank" rel="noopener">Preview homepage →</a>
+              </div>
+            </div>
+            <div data-panel="plugins" class="hidden" id="pluginsPanel">
+              <div class="admin-head">
+                <h1>Plugins</h1>
+                <p>Extend the shop with installable plugins. Configure settings, then run.</p>
+              </div>
+              <div id="pluginList"></div>
+            </div>
+            <div data-panel="mail" class="hidden" id="mailBox">
+              <strong>Mailbox</strong>
+              <p id="mailStatus" style="margin-top:6px">Loading notifications…</p>
+              <div id="mailList"></div>
+            </div>
+          </div>
 
-    <div style="display:flex;gap:12px;flex-wrap:wrap">
-      <button class="btn btn-ghost" id="resetDefaults" style="border:1px solid var(--line);color:var(--ink)">Reset to defaults</button>
-      <a class="btn btn-solid" href="index.html" target="_blank" rel="noopener">Preview homepage â†’</a>
-    </div>
-
-    </div>
-    <div data-panel="plugins" class="hidden" id="pluginsPanel">
-      <div class="admin-head">
-        <h1>Plugins</h1>
-        <p>Extend the shop with installable plugins. Configure settings, then run.</p>
+        </div>
       </div>
-      <div id="pluginList"></div>
-    </div>
-    <div data-panel="mail" class="hidden" id="mailBox">
-      <strong>Mailbox</strong>
-      <p id="mailStatus" style="margin-top:6px">Loading notificationsâ€¦</p>
-      <div id="mailList"></div>
-    </div>
+    </main>
   </div>
+</div>
 
-  <div class="toast" id="toast">Saved</div>
+<div class="toast" id="toast">Saved</div>
+<button id="adminLogout" class="hidden" type="button" aria-hidden="true"></button>
 
-  <script src="page.js"></script>
-  <script src="admin.js"></script>
-  <script src="admin.plugins.js"></script>
+<script src="cooladmin/js/vanilla-utils.js"></script>
+<script src="cooladmin/vendor/bootstrap-5.3.9.bundle.min.js"></script>
+<script src="cooladmin/js/bootstrap5-init.js"></script>
+<script src="cooladmin/js/main-vanilla.js"></script>
+<script>
+  // Sidebar / dropdown links switch the matching portal tab
+  document.querySelectorAll("[data-tab-link]").forEach((a) => {
+    a.addEventListener("click", (e) => {
+      e.preventDefault();
+      const tab = document.querySelector(`#adminTabs [data-tab="${a.dataset.tabLink}"]`);
+      if (tab) tab.click();
+    });
+  });
+  // Extra logout triggers reuse admin.js's adminLogout handler
+  ["mobileLogout", "sidebarLogout", "headerLogout"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("click", (e) => {
+      e.preventDefault();
+      const btn = document.getElementById("adminLogout");
+      if (btn) btn.click();
+    });
+  });
+</script>
+<script src="admin.js"></script>
+<script src="admin.plugins.js"></script>
 </body>
 </html>
