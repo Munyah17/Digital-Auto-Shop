@@ -21,6 +21,7 @@ const crypto = require("crypto");
 })();
 
 const mail = require("./mail");
+const crawler = require("./crawler");
 
 const PORT = 3000;
 const DATA_DIR = path.join(__dirname, "data");
@@ -62,6 +63,10 @@ function load() {
   try {
     if (fs.existsSync(STORE_FILE)) db = JSON.parse(fs.readFileSync(STORE_FILE, "utf8"));
   } catch (e) { console.error("store load failed:", e.message); }
+  if (!db.plugins) db.plugins = {};
+  if (!db.plugins["takealot-crawler"]) {
+    db.plugins["takealot-crawler"] = { settings: crawler.DEFAULT_SETTINGS, state: crawler.freshState() };
+  }
 }
 function save() {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -848,6 +853,56 @@ const routes = [
     const inbox = (db.inbox || []).map(({ uid, from, subject, date, text, receivedAt }) => ({ uid, from, subject, date, text, receivedAt }));
     const messages = (db.messages || []).map(({ id, name, email, phone, message, createdAt }) => ({ id, name, email, phone, message, createdAt }));
     send(res, 200, { configured: mail.configured(), inbox, messages });
+  }),
+
+  /* ---------------- Plugins ---------------- */
+
+  route(/^\/api\/plugins$/, "GET", (req, res) => {
+    if (!requireAuth(req, res, "admin")) return;
+    const plugins = Object.entries(db.plugins || {}).map(([id, p]) => ({
+      id,
+      name: id === "takealot-crawler" ? "Takealot Crawler" : id,
+      description: id === "takealot-crawler"
+        ? "Crawls takealot.co.za category pages and imports products (currency conversion, markup, category mapping) into a vendor's catalogue."
+        : "Custom plugin",
+      settings: p.settings || {},
+      state: p.state || {},
+    }));
+    send(res, 200, plugins);
+  }),
+
+  route(/^\/api\/plugins\/([^/]+)\/settings$/, "PUT", async (req, res, m) => {
+    if (!requireAuth(req, res, "admin")) return;
+    const plugin = (db.plugins || {})[m[1]];
+    if (!plugin) return send(res, 404, { error: "Plugin not found" });
+    const b = await body(req);
+    plugin.settings = { ...(plugin.settings || {}), ...(b.settings || b) };
+    // shallow-merge nested currency object
+    if (b.settings && b.settings.currency) plugin.settings.currency = { ...(plugin.settings.currency || {}), ...b.settings.currency };
+    save();
+    send(res, 200, { ok: true, settings: plugin.settings });
+  }),
+
+  route(/^\/api\/plugins\/([^/]+)\/run$/, "POST", async (req, res, m) => {
+    if (!requireAuth(req, res, "admin")) return;
+    const plugin = (db.plugins || {})[m[1]];
+    if (!plugin) return send(res, 404, { error: "Plugin not found" });
+    if (plugin.state && plugin.state.running) return send(res, 409, { error: "Crawl already running" });
+    if (m[1] === "takealot-crawler") {
+      // run async — respond immediately, progress via /status
+      crawler.runCrawler(db, plugin.settings, { uid, now, save })
+        .catch((e) => { plugin.state.errors.push("Fatal: " + e.message); plugin.state.running = false; save(); });
+      send(res, 202, { ok: true, started: true });
+      return;
+    }
+    send(res, 400, { error: "Plugin has no runner" });
+  }),
+
+  route(/^\/api\/plugins\/([^/]+)\/status$/, "GET", (req, res, m) => {
+    if (!requireAuth(req, res, "admin")) return;
+    const plugin = (db.plugins || {})[m[1]];
+    if (!plugin) return send(res, 404, { error: "Plugin not found" });
+    send(res, 200, plugin.state || {});
   }),
 ];
 

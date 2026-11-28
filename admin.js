@@ -249,6 +249,7 @@ document.querySelectorAll("#adminTabs .portal-tab").forEach((btn) => {
       panel.classList.toggle("hidden", panel.dataset.panel !== btn.dataset.tab);
     });
     if (btn.dataset.tab === "mail") loadMailbox();
+    if (btn.dataset.tab === "plugins") loadPlugins();
   });
 });
 

@@ -62,6 +62,7 @@
       <button class="portal-tab" type="button" data-tab="customers">Customers</button>
       <button class="portal-tab" type="button" data-tab="vendors">Vendors</button>
       <button class="portal-tab" type="button" data-tab="slides">Hero slides</button>
+      <button class="portal-tab" type="button" data-tab="plugins">Plugins</button>
       <button class="portal-tab" type="button" data-tab="mail">Mailbox</button>
     </div>
     <div data-panel="overview">
@@ -93,6 +94,13 @@
     </div>
 
     </div>
+    <div data-panel="plugins" class="hidden" id="pluginsPanel">
+      <div class="admin-head">
+        <h1>Plugins</h1>
+        <p>Extend the shop with installable plugins. Configure settings, then run.</p>
+      </div>
+      <div id="pluginList"></div>
+    </div>
     <div data-panel="mail" class="hidden" id="mailBox">
       <strong>Mailbox</strong>
       <p id="mailStatus" style="margin-top:6px">Loading notificationsâ€¦</p>
@@ -104,5 +112,6 @@
 
   <script src="page.js"></script>
   <script src="admin.js"></script>
+  <script src="admin.plugins.js"></script>
 </body>
 </html>
